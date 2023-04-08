@@ -31,6 +31,7 @@ import java.util.*;
 @Component
 public class TelegramDailyBot extends TelegramLongPollingBot {
 
+    private final ChatGPT3Service chatGpt3Service;
     private final ChatDeletionHandler chatDeletionHandler;
 
     private final ChatEditHandler chatEditHandler;
@@ -48,12 +49,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
 
 
     @Autowired
-    public TelegramDailyBot(ChatEditHandler chatEditHandler, ChatDeletionHandler chatDeletionHandler, NotificationEditHandler notificationEditHandler, NotificationDeletionHandler notificationDeletionHandler, UserEditHandler userEditHandler, UserDeletionHandler userDeletionHandler,
+    public TelegramDailyBot(ChatGPT3Service chatGpt3Service, ChatEditHandler chatEditHandler, ChatDeletionHandler chatDeletionHandler, NotificationEditHandler notificationEditHandler, NotificationDeletionHandler notificationDeletionHandler, UserEditHandler userEditHandler, UserDeletionHandler userDeletionHandler,
                             TelegramDailyBotProperties properties,
                             ChatRepository chatRepository,
                             NotificationRepository notificationRepository,
                             UserRepository userRepository) {
         super(properties.getBotToken());
+        this.chatGpt3Service = chatGpt3Service;
         this.chatEditHandler = chatEditHandler;
         this.chatDeletionHandler = chatDeletionHandler;
         this.notificationEditHandler = notificationEditHandler;
@@ -118,6 +120,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         Long userId = message.getFrom().getId();
         UserActionState userActionState = userActionStates.get(userId);
 
+        if (userActionState == null) {
+            logger.warn("UserActionState is null for user: {}", userId);
+            // You can either return here or set a default value for userActionState
+            sendChatMessage(chatId, "Сначала выберите команду");
+            return;
+        }
+
         switch (userActionState) {
             case WAITING_FOR_USERS_TO_ADD -> handleUserAdding(message, text, chatId, userId);
             case WAITING_FOR_USERS_TO_DELETE -> {
@@ -170,6 +179,23 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                     logger.error("Error sending message to user: {}", userId, e);
                 }
             }
+            case WAITING_FOR_CHATGPT3_QUERY -> {
+                sendChatMessage(chatId, "Подождите, пожалуйста, ChatGPT пишет ответ...");
+                // Remove the user from the userAddingStates map
+                userActionStates.remove(userId);
+                chatGpt3Service.chat(text).thenAcceptAsync(responseText -> {
+                    SendMessage responseMsg = new SendMessage();
+                    responseMsg.setChatId(chatId.toString());
+                    responseMsg.setText(responseText);
+
+                    try {
+                        execute(responseMsg);
+                    } catch (TelegramApiException e) {
+                        logger.error("Error sending message to user: {}", userId, e);
+                    }
+
+                });
+            }
         }
     }
 
@@ -218,7 +244,24 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             case "/editusers" -> editUsers(chatId);
             case "/editnotifications" -> editNotifications(chatId);
             case "/editchats" -> editChats(message, chatId);
+            case "/askchatgpt3" -> askChatGPT3(message, chatId);
             default -> sendChatMessage(chatId, "Неизвестная команда!");
+        }
+    }
+
+    private void askChatGPT3(Message message, Long chatId) {
+
+        Long userId = message.getFrom().getId();
+
+        userActionStates.put(userId, UserActionState.WAITING_FOR_CHATGPT3_QUERY);
+
+        SendMessage responseMessage = new SendMessage();
+        responseMessage.setChatId(chatId.toString());
+        responseMessage.setText("Напишите свой вопрос ChatGPT3");
+        try {
+            execute(responseMessage);
+        } catch (TelegramApiException e) {
+            logger.error("Error sending message to user: {}", userId, e);
         }
     }
 

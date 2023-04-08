@@ -10,7 +10,7 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 @Configuration
 public class TelegramDailyBotConfiguration {
     @Bean
-    public TelegramBotsApi telegramBotsApi(ChatEditHandler chatEditHandler, ChatDeletionHandler chatDeletionHandler, NotificationEditHandler notificationEditHandler,NotificationDeletionHandler notificationDeletionHandler, UserEditHandler userEditHandler,
+    public TelegramBotsApi telegramBotsApi(ChatGPT3Service chatGpt3Service, ChatEditHandler chatEditHandler, ChatDeletionHandler chatDeletionHandler, NotificationEditHandler notificationEditHandler,NotificationDeletionHandler notificationDeletionHandler, UserEditHandler userEditHandler,
             UserDeletionHandler userDeletionHandler,
                                            TelegramDailyBotProperties properties,
                                            ChatRepository chatRepository,
@@ -18,7 +18,7 @@ public class TelegramDailyBotConfiguration {
                                            UserRepository userRepository) throws TelegramApiException {
         TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
         try {
-            botsApi.registerBot(new TelegramDailyBot(chatEditHandler, chatDeletionHandler, notificationEditHandler, notificationDeletionHandler, userEditHandler,userDeletionHandler, properties, chatRepository, notificationRepository, userRepository));
+            botsApi.registerBot(new TelegramDailyBot(chatGpt3Service, chatEditHandler, chatDeletionHandler, notificationEditHandler, notificationDeletionHandler, userEditHandler,userDeletionHandler, properties, chatRepository, notificationRepository, userRepository));
         } catch (Exception e) {
             e.printStackTrace();
         }
