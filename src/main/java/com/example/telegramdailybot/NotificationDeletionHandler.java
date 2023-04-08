@@ -57,7 +57,7 @@ public class NotificationDeletionHandler implements TelegramDailyBotInterface {
         // Send a confirmation message to the user
         SendMessage msg = new SendMessage();
         msg.setChatId(chatId.toString());
-        msg.setText("Notifications have been deleted successfully.");
+        msg.setText("Уведомления успешно удалены");
 
         return msg;
     }

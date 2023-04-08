@@ -56,7 +56,7 @@ public class ChatDeletionHandler implements TelegramDailyBotInterface {
         // Send a confirmation message to the user
         SendMessage msg = new SendMessage();
         msg.setChatId(chatId.toString());
-        msg.setText("Chats have been deleted successfully.");
+        msg.setText("Чаты успешно удалены");
 
         return msg;
     }

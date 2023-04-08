@@ -52,7 +52,7 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
             // Send an error message if the text could not be parsed
             SendMessage msg = new SendMessage();
             msg.setChatId(chatId.toString());
-            msg.setText("Error parsing the notification ID. Please check the format and try again.");
+            msg.setText("Ошибка при парсинге ID. Пожалуйста, проверьте формат и попробуйте еще раз.");
             return msg;
         }
         Integer id = Integer.parseInt(matcher.group(1));
@@ -61,7 +61,7 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
             // Send an error message if the text could not be parsed
             SendMessage msg = new SendMessage();
             msg.setChatId(chatId.toString());
-            msg.setText("Error parsing the notification text. Please check the format and try again.");
+            msg.setText("Ошибка при парсинге уведомления. Пожалуйста, проверьте формат и попробуйте еще раз.");
             return msg;
         }
         // Set the chat ID
@@ -85,7 +85,7 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
         // Send a confirmation message to the user
         SendMessage msg = new SendMessage();
         msg.setChatId(chatId.toString());
-        msg.setText("Notification has been edited successfully.");
+        msg.setText("Уведомление успешно изменено");
 
         return msg;
     }

@@ -228,7 +228,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     }
 
     private void handleStartCommand(Long chatId) {
-        sendChatMessage(chatId, "Ваш бот DailyBot2.0 готов к использованию! \uD83C\uDF89 Бот поможет вам в организации ежедневных задач и оповещений для группы. Вы можете добавлять пользователей, назначать победителей, управлять уведомлениями и многое другое. Чтобы узнать доступные команды, используйте /help. Приятного использования! \uD83D\uDE0A");
+        sendChatMessage(chatId, "Ваш бот DailyBot2.0 готов к использованию! \uD83C\uDF89 Бот поможет вам в организации ежедневных задач и оповещений для группы. Вы можете добавлять пользователей, назначать победителей, управлять уведомлениями и многое другое. Приятного использования! \uD83D\uDE0A");
     }
 
     private void handleGetChatIdCommand(Long chatId) {
@@ -270,7 +270,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
 
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText("Пожалуйста, вышлите через запятую: имя, username. Например:\n\nВася,vasyatelegram\nПетя,evilusername\nЭвелина,evacool");
+        message.setText("Пожалуйста, вышлите через запятую: имя, @username. Например:\n\nВася,@vasyatelegram\nПетя,@evilusername\nЭвелина,@evacool");
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -283,7 +283,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
 
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText("Please send chat information in the following format:\n\nID, Name, Role\n\nYou can add multiple chats, one per line.");
+        message.setText("Пожалуйста, вышлите через запятую: ID, название чата, роль. Например::\n\n12345678, Чат команды1,\n12345678, Чат команды2,\n12345678, Иван Иванов, admin");
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -331,7 +331,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         userActionStates.put(userId, UserActionState.WAITING_FOR_CHATS_TO_DELETE);
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText("Please send chat IDs, one per line, that you want to delete. For example:\n\n10\n11\n12");
+        message.setText("Пожалуйста, вышлите ID чатов, которых вы хотите удалить, каждый ID с новой строчки. Например:\n\n10\n11\n12");
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -426,7 +426,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         // Send a confirmation message to the user
         SendMessage msg = new SendMessage();
         msg.setChatId(chatId.toString());
-        msg.setText("Users have been added successfully.");
+        msg.setText("Участники успешно добавлены");
         try {
             execute(msg);
         } catch (TelegramApiException e) {
@@ -460,7 +460,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         // Send a confirmation message to the user
         SendMessage msg = new SendMessage();
         msg.setChatId(chatId.toString());
-        msg.setText("Chats have been added successfully.");
+        msg.setText("Чаты успешно добавлены");
         try {
             execute(msg);
         } catch (TelegramApiException e) {
@@ -476,7 +476,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             // Send an error message if the text could not be parsed
             SendMessage msg = new SendMessage();
             msg.setChatId(chatId.toString());
-            msg.setText("Error parsing the notification text. Please check the format and try again.");
+            msg.setText("Ошибка при добавлении уведомления. Пожалуйста, проверьте соответствие шаблону");
             try {
                 execute(msg);
             } catch (TelegramApiException e) {
@@ -496,7 +496,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         // Send a confirmation message to the user
         SendMessage msg = new SendMessage();
         msg.setChatId(chatId.toString());
-        msg.setText("Notifications have been added successfully.");
+        msg.setText("Уведомление успешно добавлено");
         try {
             execute(msg);
         } catch (TelegramApiException e) {
@@ -507,7 +507,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private void editUsers(Long chatId) {
         List<User> users = userRepository.findByChatid(chatId);
         if (users.isEmpty()) {
-            sendChatMessage(chatId, "No users found!");
+            sendChatMessage(chatId, "Участники для этого чата отсутствуют");
             return;
         }
 
@@ -553,7 +553,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private void editNotifications(Long chatId) {
         List<Notification> notifications = notificationRepository.findByChatid(chatId);
         if (notifications.isEmpty()) {
-            sendChatMessage(chatId, "No notifications found!");
+            sendChatMessage(chatId, "Уведомления для этого чата отсутствуют");
             return;
         }
 
@@ -654,7 +654,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             user.setHaswon(false);
             userRepository.save(user);
         }
-        sendChatMessage(chatId, "Выигравшие сброшены!");
+        sendChatMessage(chatId, "Победители сброшены!");
     }
 
     private void showUsers(Long chatId) {
@@ -670,7 +670,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private void showNotifications(Long chatId) {
         List<Notification> notifications = notificationRepository.findByChatid(chatId);
         if (notifications.isEmpty()) {
-            sendChatMessage(chatId, "Уведомлений для этого чата нет!");
+            sendChatMessage(chatId, "Уведомления для этого чата отсутствуют");
             return;
         }
 
@@ -744,7 +744,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         User winner = findWinner(chatId);
 
         if (winner == null) {
-            sendChatMessage(chatId, "Не найдено ни одного участника в розыгрыше!");
+            sendChatMessage(chatId, "Участники для розыгрыша в этом чате отсутствуют");
         } else {
             sendChatMessage(chatId, "Участник " + winner.getName() + ", @" + winner.getUsername() + " выиграл!");
         }
@@ -778,7 +778,6 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         ArrayNode skipDays = (ArrayNode) datetimexcluded.get("skip_days");
         if (skipDays != null) {
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            ObjectMapper objectMapper = new ObjectMapper();
             for (JsonNode skipDay : skipDays) {
                 int frequency = skipDay.get("frequency").asInt();
                 String dayStr = skipDay.get("day").asText();
@@ -825,7 +824,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                                 text = text.replace("@name", winner.getName());
                                 text = text.replace("@username", "@" + winner.getUsername());
                             } else {
-                                text = "There are no users for this chat!";
+                                text = "Участники для розыгрыша в этом чате отсутствуют";
                             }
                         }
                         sendChatMessage(chat.getTelegramchatid(), text);
@@ -836,7 +835,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                 // Move the switch statement here, outside the !isNotificationExcluded() check but still within the time range check
                 switch (notification.getRepetition()) {
                     case "minutely" -> {
-                        notification.setDatetime(notificationDateTime.plusMinutes(2));
+                        notification.setDatetime(notificationDateTime.plusMinutes(5));
                         notificationRepository.save(notification);
                     }
                     case "hourly" -> {

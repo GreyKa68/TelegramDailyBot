@@ -68,7 +68,7 @@ public class UserEditHandler implements TelegramDailyBotInterface {
         // Send a confirmation message to the user
         SendMessage msg = new SendMessage();
         msg.setChatId(chatId.toString());
-        msg.setText("Users have been edited successfully.");
+        msg.setText("Данные участников успешно изменены");
         return msg;
     }
 }
