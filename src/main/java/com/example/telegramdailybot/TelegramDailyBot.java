@@ -776,29 +776,40 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         }
     }
 
+    // This method checks if a given notification is excluded from being sent at the specified time.
     private boolean isNotificationExcluded(Notification notification, LocalDateTime now) {
+        // Retrieve the "datetimexcluded" configuration from the notification
         JsonNode datetimexcluded = notification.getDatetimexcluded();
+        // If "datetimexcluded" is not set, the notification is not excluded.
         if (datetimexcluded == null) {
             return false;
         }
 
+        // Check if weekends are excluded from the notification schedule
         boolean isWeekendExcluded = datetimexcluded.get("weekends").asBoolean();
         if (isWeekendExcluded) {
+            // If the current day is Saturday (6) or Sunday (7), the notification is excluded
             int dayOfWeek = now.getDayOfWeek().getValue();
             if (dayOfWeek == 6 || dayOfWeek == 7) {
                 return true;
             }
         }
 
+        // Check if specific days are excluded from the notification schedule
         ArrayNode skipDays = (ArrayNode) datetimexcluded.get("skip_days");
         if (skipDays != null) {
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            // Iterate through each day specified in the "skip_days" array
             for (JsonNode skipDay : skipDays) {
+                // Retrieve the frequency and day for the current "skip_day" entry
                 int frequency = skipDay.get("frequency").asInt();
                 String dayStr = skipDay.get("day").asText();
                 LocalDateTime day = LocalDate.parse(dayStr, dateFormatter).atStartOfDay();
+                // Calculate the number of days between the given day and the current time
                 long daysBetween = java.time.Duration.between(day, now).toDays();
 
+                // If the days between the given day and now is a multiple of the frequency,
+                // the notification is excluded
                 if (daysBetween % frequency == 0) {
                     // Update the "day" value in the "skip_days" array
                     LocalDateTime newDay = day.plusDays(frequency);
@@ -813,8 +824,10 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             }
         }
 
+        // If none of the exclusion conditions apply, the notification is not excluded
         return false;
     }
+
 
     @Scheduled(fixedRate = 60000, initialDelay = 1000) // Run every 60 seconds
     public void checkAndSendNotifications() {
