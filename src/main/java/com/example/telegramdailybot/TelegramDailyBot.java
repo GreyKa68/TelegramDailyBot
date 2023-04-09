@@ -562,15 +562,15 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     // It displays a list of Users and provides an inline keyboard with Add, Delete, and Edit buttons.
     private void editUsers(Long chatId) {
         List<User> users = userRepository.findByChatid(chatId);
+        StringBuilder sb = new StringBuilder();
         if (users.isEmpty()) {
-            sendChatMessage(chatId, "Участники розыгрышей в этом чате отсутствуют");
-            return;
-        }
-
-        StringBuilder sb = new StringBuilder("Участники розыгрышей в этом чате:\n\n");
-        for (User user : users) {
-            sb.append("ID: ").append(user.getId()).append(", ")
-                    .append(user.getName()).append(", @").append(user.getUsername()).append('\n');
+            sb.append("Участники розыгрышей в этом чате отсутствуют");
+        } else {
+            sb .append("Участники розыгрышей в этом чате:\n\n");
+            for (User user : users) {
+                sb.append("ID: ").append(user.getId()).append(", ")
+                        .append(user.getName()).append(", @").append(user.getUsername()).append('\n');
+            }
         }
 
         // Create an inline keyboard markup for editing Users.
@@ -582,11 +582,6 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     // This method allows the user to edit Notifications in the specified chat.
     // It displays a list of Notifications and provides an inline keyboard with Add, Delete, and Edit buttons.
     private void editNotifications(Long chatId) {
-        List<Notification> notifications = notificationRepository.findByChatid(chatId);
-        if (notifications.isEmpty()) {
-            sendChatMessage(chatId, "Уведомления для этого чата отсутствуют");
-            return;
-        }
 
         showNotifications(chatId);
         // Create an inline keyboard markup for editing Notifications.
