@@ -829,6 +829,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     }
 
 
+    //This method is responsible for checking and sending notifications to chats.
+    //It is scheduled to run every 60 seconds after an initial delay of 1 second.
     @Scheduled(fixedRate = 60000, initialDelay = 1000) // Run every 60 seconds
     public void checkAndSendNotifications() {
         List<Notification> notifications = notificationRepository.findAll();
@@ -837,6 +839,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             LocalDateTime notificationDateTime = notification.getDatetime();
             LocalDateTime now = LocalDateTime.now();
 
+            // Check if the current time is within the 1-minute time window of the notification's scheduled time
             if ((now.isEqual(notificationDateTime) || (now.isAfter(notificationDateTime) && now.isBefore(notificationDateTime.plusMinutes(1))))) {
                 if (!isNotificationExcluded(notification, now)) {
                     Optional<Chat> optionalChat = chatRepository.findById(notification.getChatid());
@@ -844,6 +847,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                         Chat chat = optionalChat.get();
                         String text = notification.getText();
 
+                        // Replace "@name" and "@username" placeholders with the winner's name and username, if applicable
                         if (text.contains("@name") || text.contains("@username")) {
                             User winner = findWinner(chat.getTelegramchatid());
                             if (winner != null) {
@@ -858,7 +862,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                         notificationRepository.delete(notification);
                     }
                 }
-                // Move the switch statement here, outside the !isNotificationExcluded() check but still within the time range check
+                // Update the notification's scheduled time based on its repetition setting
+                // This is outside the !isNotificationExcluded() check but still within the time range check
                 switch (notification.getRepetition()) {
                     case "minutely" -> {
                         notification.setDatetime(notificationDateTime.plusMinutes(5));
