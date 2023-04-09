@@ -1,4 +1,4 @@
-package com.example.telegramdailybot;
+package com.example.telegramdailybot.repository;
 
 import com.example.telegramdailybot.model.Notification;
 import org.springframework.data.jpa.repository.JpaRepository;
