@@ -1,4 +1,4 @@
-package com.example.telegramdailybot;
+package com.example.telegramdailybot.model;
 
 public enum UserActionState {
     WAITING_FOR_USERS_TO_ADD,

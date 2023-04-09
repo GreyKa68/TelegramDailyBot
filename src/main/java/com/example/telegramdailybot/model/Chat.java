@@ -1,4 +1,4 @@
-package com.example.telegramdailybot;
+package com.example.telegramdailybot.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

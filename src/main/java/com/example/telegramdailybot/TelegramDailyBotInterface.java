@@ -1,5 +1,6 @@
 package com.example.telegramdailybot;
 
+import com.example.telegramdailybot.model.UserActionState;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 

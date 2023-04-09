@@ -1,6 +1,10 @@
 package com.example.telegramdailybot;
 
 
+import com.example.telegramdailybot.model.Chat;
+import com.example.telegramdailybot.model.Notification;
+import com.example.telegramdailybot.model.User;
+import com.example.telegramdailybot.model.UserActionState;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
