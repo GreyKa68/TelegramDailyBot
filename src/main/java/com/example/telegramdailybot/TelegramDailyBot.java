@@ -318,7 +318,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                 Пожалуйста, пришлите уведомление согласно следующему шаблону. Для удобства шаблон можно скопировать, вставить и отредактировать
 
                 Текст уведомления: Все на дейли, сегодня шарит @name, @username!
-                Дата и время: 2023-04-06T14:00
+                Дата и время: 2023-04-06T14:00+0300
                 Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}
                 Исключения:
                   - Исключить СБ и ВС
@@ -435,7 +435,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                                 
                 ID 11
                 Текст уведомления: Все на дейли, сегодня шарит @name, @username!
-                Дата и время: 2023-04-06T14:00
+                Дата и время: 2023-04-06T14:00+0300
                 Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}
                 Исключения:
                   - Исключить СБ и ВС
