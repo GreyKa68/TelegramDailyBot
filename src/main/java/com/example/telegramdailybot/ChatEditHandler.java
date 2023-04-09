@@ -12,6 +12,7 @@ public class ChatEditHandler implements TelegramDailyBotInterface {
 
     @Autowired
     private ChatRepository chatRepository;
+
     @Override
     public SendMessage handleUserDeleting(Map<Long, UserActionState> userActionStates, Message message, String text, Long chatId, Long userId) {
         return null;

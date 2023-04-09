@@ -1,6 +1,9 @@
 package com.example.telegramdailybot;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +20,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,11 +29,10 @@ import java.util.*;
 @Component
 public class TelegramDailyBot extends TelegramLongPollingBot {
 
+    private static final Logger logger = LoggerFactory.getLogger(TelegramDailyBot.class);
     private final ChatGPT3Service chatGpt3Service;
     private final ChatDeletionHandler chatDeletionHandler;
-
     private final ChatEditHandler chatEditHandler;
-
     private final UserDeletionHandler userDeletionHandler;
     private final UserEditHandler userEditHandler;
     private final NotificationDeletionHandler notificationDeletionHandler;
@@ -43,9 +41,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private final ChatRepository chatRepository;
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
-
     private final Map<Long, UserActionState> userActionStates = new HashMap<>();
-
 
     @Autowired
     public TelegramDailyBot(ChatGPT3Service chatGpt3Service, ChatEditHandler chatEditHandler, ChatDeletionHandler chatDeletionHandler, NotificationEditHandler notificationEditHandler, NotificationDeletionHandler notificationDeletionHandler, UserEditHandler userEditHandler, UserDeletionHandler userDeletionHandler,
@@ -66,8 +62,6 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
     }
-
-    private static final Logger logger = LoggerFactory.getLogger(TelegramDailyBot.class);
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -221,13 +215,17 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     }
 
     private void handleStartCommand(Long chatId) {
-        String welcomeMessage = "🎉 Добро пожаловать в DailyBot2.0! 🤖\n\n" +
-                "🌟 Ваш личный помощник для организации ежедневных задач и оповещений в Телеграм-чате! 📅\n\n" +
-                "🚀 Что мы можем сделать вместе:\n" +
-                "1️⃣ Лотерея пользователей: выбирайте победителей и добавляйте новых участников 🏆\n" +
-                "2️⃣ Персонализированные уведомления: создавайте и редактируйте напоминания 🔔\n" +
-                "3️⃣ Умные ответы с ChatGPT: задавайте вопросы и получайте развернутые ответы 🧠💬\n\n" +
-                "🤩 Приятного использования! Вместе мы сделаем ваш чат продуктивнее и веселее! 🎯";
+        String welcomeMessage = """
+                🎉 Добро пожаловать в DailyBot2.0! 🤖
+
+                🌟 Ваш личный помощник для организации ежедневных задач и оповещений в Телеграм-чате! 📅
+
+                🚀 Что мы можем сделать вместе:
+                1️⃣ Лотерея пользователей: выбирайте победителей и добавляйте новых участников 🏆
+                2️⃣ Персонализированные уведомления: создавайте и редактируйте напоминания 🔔
+                3️⃣ Умные ответы с ChatGPT: задавайте вопросы и получайте развернутые ответы 🧠💬
+
+                🤩 Приятного использования! Вместе мы сделаем ваш чат продуктивнее и веселее! 🎯""";
 
         sendChatMessage(chatId, welcomeMessage);
     }
@@ -271,7 +269,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
 
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText("Пожалуйста, вышлите через запятую: имя, @username. Например:\n\nВася,@vasyatelegram\nПетя,@evilusername\nЭвелина,@evacool");
+        String text = """
+                Пожалуйста, вышлите через запятую: имя, @username. Например:
+
+                Вася,@vasyatelegram
+                Петя,@evilusername
+                Эвелина,@evacool""";
+        message.setText(text);
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -284,7 +288,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
 
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText("Пожалуйста, вышлите через запятую: ID, название чата, роль. Например::\n\n12345678, Чат команды1,\n12345678, Чат команды2,\n12345678, Иван Иванов, admin");
+        String text = """
+                Пожалуйста, вышлите через запятую: ID, название чата, роль. Например:
+
+                12345678, Чат команды1, admin
+                12345678, Чат команды2, user
+                12345678, Иван Иванов, admin""";
+        message.setText(text);
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -295,19 +305,22 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private void initiateAddNotificationProcess(Long userId, Long chatId) {
         userActionStates.put(userId, UserActionState.WAITING_FOR_NOTIFICATION_TO_ADD);
 
-        String sb = "Пожалуйста, пришлите уведомление согласно следующему шаблону. Для удобства шаблон можно скопировать, вставить и отредактировать\n\n" +
-                "Текст уведомления: Все на дейли, сегодня шарит @name, @username!\n" +
-                "Дата и время: 2023-04-06T14:00\n" +
-                "Частота: minutely\n" +
-                "Исключения:\n" +
-                "  - Исключить СБ и ВС\n" +
-                "  - Исключить дни:\n" +
-                "    * 2023-04-12 (every 7 days)\n" +
-                "    * 2023-04-24 (every 21 days)\n" +
-                "    * 2023-04-07 (every 7 days)";
+        String text = """
+                Пожалуйста, пришлите уведомление согласно следующему шаблону. Для удобства шаблон можно скопировать, вставить и отредактировать
+
+                Текст уведомления: Все на дейли, сегодня шарит @name, @username!
+                Дата и время: 2023-04-06T14:00
+                Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}
+                Исключения:
+                  - Исключить СБ и ВС
+                  - Исключить дни:
+                    * 2023-04-12 (every 7 days)
+                    * 2023-04-24 (every 21 days)
+                    * 2023-04-07 (every 7 days)""";
+
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText(sb);
+        message.setText(text);
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -319,7 +332,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         userActionStates.put(userId, UserActionState.WAITING_FOR_USERS_TO_DELETE);
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText("Пожалуйста, вышлите ID участников, которых вы хотите удалить, каждый ID с новой строчки. Например:\n\n10\n11\n12");
+        String text = """
+                Пожалуйста, вышлите ID участников, которых вы хотите удалить, каждый ID с новой строчки. Например:
+
+                10
+                11
+                12""";
+        message.setText(text);
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -331,7 +350,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         userActionStates.put(userId, UserActionState.WAITING_FOR_CHATS_TO_DELETE);
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText("Пожалуйста, вышлите ID чатов, которых вы хотите удалить, каждый ID с новой строчки. Например:\n\n10\n11\n12");
+        String text = """
+                Пожалуйста, вышлите ID чатов, которых вы хотите удалить, каждый ID с новой строчки. Например:
+
+                10
+                11
+                12""";
+        message.setText(text);
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -343,7 +368,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         userActionStates.put(userId, UserActionState.WAITING_FOR_NOTIFICATION_TO_DELETE);
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText("Пожалуйста, вышлите ID уведомлений, которые вы хотите удалить, каждый ID с новой строчки. Например:\n\n10\n11\n12");
+        String text = """
+                Пожалуйста, вышлите ID уведомлений, которые вы хотите удалить, каждый ID с новой строчки. Например:
+
+                10
+                11
+                12""";
+        message.setText(text);
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -355,7 +386,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         userActionStates.put(userId, UserActionState.WAITING_FOR_USERS_TO_EDIT);
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText("Пожалуйста, вышлите через запятую: ID участника, которого вы хотите изменить, имя, username. Например:\n\n10,Вася,vasyatelegram\n11,Петя,evilusername\n12,Эвелина,evacool");
+        String text = """
+                Пожалуйста, вышлите через запятую: ID участника, которого вы хотите изменить, имя, username. Например:
+
+                10,Вася,vasyatelegram
+                11,Петя,evilusername
+                12,Эвелина,evacool""";
+        message.setText(text);
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -367,7 +404,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         userActionStates.put(userId, UserActionState.WAITING_FOR_CHATS_TO_EDIT);
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText("Пожалуйста, вышлите через запятую: ID чата, который вы хотите изменить, название, роль. Например:\n\n10,Scrum команда1,\n11,Петя,admin\n12,Scrum команда2,");
+        String text = """
+                Пожалуйста, вышлите через запятую: ID чата, который вы хотите изменить, название, роль. Например:
+
+                10,Scrum команда1,
+                11,Петя,admin
+                12,Scrum команда2,""";
+        message.setText(text);
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -378,20 +421,23 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private void initiateEditNotificationProcess(Long userId, Long chatId) {
         userActionStates.put(userId, UserActionState.WAITING_FOR_NOTIFICATION_TO_EDIT);
 
-        String sb = "Пожалуйста, пришлите измененное уведомление согласно следующему шаблону. Для удобства скопируйте предыдущую версию уведомления и измените ее\n\n" +
-                "ID 11\n" +
-                "Текст уведомления: Все на дейли, сегодня шарит @name, @username!\n" +
-                "Дата и время: 2023-04-06T14:00\n" +
-                "Частота: minutely\n" +
-                "Исключения:\n" +
-                "  - Исключить СБ и ВС\n" +
-                "  - Исключить дни:\n" +
-                "    * 2023-04-12 (every 7 days)\n" +
-                "    * 2023-04-24 (every 21 days)\n" +
-                "    * 2023-04-07 (every 7 days)";
+        String text = """
+                Пожалуйста, пришлите измененное уведомление согласно следующему шаблону. Для удобства скопируйте предыдущую версию уведомления и измените ее
+                                
+                ID 11
+                Текст уведомления: Все на дейли, сегодня шарит @name, @username!
+                Дата и время: 2023-04-06T14:00
+                Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}
+                Исключения:
+                  - Исключить СБ и ВС
+                  - Исключить дни:
+                    * 2023-04-12 (every 7 days)
+                    * 2023-04-24 (every 21 days)
+                    * 2023-04-07 (every 7 days)""";
+
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText(sb);
+        message.setText(text);
         try {
             execute(message);
         } catch (TelegramApiException e) {

@@ -28,11 +28,7 @@ public class NotificationUtils {
 
             Pattern weekendsPattern = Pattern.compile("- Исключить СБ и ВС");
             Matcher weekendsMatcher = weekendsPattern.matcher(exclusionsText);
-            if (weekendsMatcher.find()) {
-                exclusionsJson.put("weekends", true);
-            } else {
-                exclusionsJson.put("weekends", false);
-            }
+            exclusionsJson.put("weekends", weekendsMatcher.find());
 
             Pattern skipDaysPattern = Pattern.compile("\\* (\\d{4}-\\d{2}-\\d{2}) \\(every (\\d+) days\\)");
             Matcher skipDaysMatcher = skipDaysPattern.matcher(exclusionsText);

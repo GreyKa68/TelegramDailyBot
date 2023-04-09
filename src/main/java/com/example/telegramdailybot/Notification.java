@@ -1,8 +1,8 @@
 package com.example.telegramdailybot;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;
 import lombok.Data;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.hibernate.annotations.ColumnTransformer;
 
 import java.time.LocalDateTime;
