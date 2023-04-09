@@ -1,6 +1,6 @@
 package com.example.telegramdailybot.model;
 
-import com.example.telegramdailybot.JsonNodeConverter;
+import com.example.telegramdailybot.util.JsonNodeConverter;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;
 import lombok.Data;

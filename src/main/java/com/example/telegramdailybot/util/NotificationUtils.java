@@ -1,4 +1,4 @@
-package com.example.telegramdailybot;
+package com.example.telegramdailybot.util;
 
 import com.example.telegramdailybot.model.Notification;
 import com.fasterxml.jackson.databind.ObjectMapper;
