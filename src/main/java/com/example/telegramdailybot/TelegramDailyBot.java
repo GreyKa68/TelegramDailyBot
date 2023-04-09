@@ -18,7 +18,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -45,7 +44,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
 
-    private Map<Long, UserActionState> userActionStates = new HashMap<>();
+    private final Map<Long, UserActionState> userActionStates = new HashMap<>();
 
 
     @Autowired
@@ -104,15 +103,9 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         }
 
         switch (command.toLowerCase()) {
-            case "/start":
-                handleStartCommand(chatId);
-                break;
-            case "/getchatid":
-                handleGetChatIdCommand(chatId);
-                break;
-            default:
-                handleChatCommand(message, command, chatId);
-                break;
+            case "/start" -> handleStartCommand(chatId);
+            case "/getchatid" -> handleGetChatIdCommand(chatId);
+            default -> handleChatCommand(message, command, chatId);
         }
     }
 
@@ -228,16 +221,15 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     }
 
     private void handleStartCommand(Long chatId) {
-        StringBuilder welcomeMessage = new StringBuilder();
-        welcomeMessage.append("🎉 Добро пожаловать в DailyBot2.0! 🤖\n\n");
-        welcomeMessage.append("🌟 Ваш личный помощник для организации ежедневных задач и оповещений в Телеграм-чате! 📅\n\n");
-        welcomeMessage.append("🚀 Что мы можем сделать вместе:\n");
-        welcomeMessage.append("1️⃣ Лотерея пользователей: выбирайте победителей и добавляйте новых участников 🏆\n");
-        welcomeMessage.append("2️⃣ Персонализированные уведомления: создавайте и редактируйте напоминания 🔔\n");
-        welcomeMessage.append("3️⃣ Умные ответы с ChatGPT: задавайте вопросы и получайте развернутые ответы 🧠💬\n\n");
-        welcomeMessage.append("🤩 Приятного использования! Вместе мы сделаем ваш чат продуктивнее и веселее! 🎯");
+        String welcomeMessage = "🎉 Добро пожаловать в DailyBot2.0! 🤖\n\n" +
+                "🌟 Ваш личный помощник для организации ежедневных задач и оповещений в Телеграм-чате! 📅\n\n" +
+                "🚀 Что мы можем сделать вместе:\n" +
+                "1️⃣ Лотерея пользователей: выбирайте победителей и добавляйте новых участников 🏆\n" +
+                "2️⃣ Персонализированные уведомления: создавайте и редактируйте напоминания 🔔\n" +
+                "3️⃣ Умные ответы с ChatGPT: задавайте вопросы и получайте развернутые ответы 🧠💬\n\n" +
+                "🤩 Приятного использования! Вместе мы сделаем ваш чат продуктивнее и веселее! 🎯";
 
-        sendChatMessage(chatId, welcomeMessage.toString());
+        sendChatMessage(chatId, welcomeMessage);
     }
 
     private void handleGetChatIdCommand(Long chatId) {
@@ -303,20 +295,19 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private void initiateAddNotificationProcess(Long userId, Long chatId) {
         userActionStates.put(userId, UserActionState.WAITING_FOR_NOTIFICATION_TO_ADD);
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("Пожалуйста, пришлите уведомление согласно следующему шаблону. Для удобства шаблон можно скопировать, вставить и отредактировать\n\n");
-        sb.append("Текст уведомления: Все на дейли, сегодня шарит @name, @username!\n");
-        sb.append("Дата и время: 2023-04-06T14:00\n");
-        sb.append("Частота: minutely\n");
-        sb.append("Исключения:\n");
-        sb.append("  - Исключить СБ и ВС\n");
-        sb.append("  - Исключить дни:\n");
-        sb.append("    * 2023-04-12 (every 7 days)\n");
-        sb.append("    * 2023-04-24 (every 21 days)\n");
-        sb.append("    * 2023-04-07 (every 7 days)");
+        String sb = "Пожалуйста, пришлите уведомление согласно следующему шаблону. Для удобства шаблон можно скопировать, вставить и отредактировать\n\n" +
+                "Текст уведомления: Все на дейли, сегодня шарит @name, @username!\n" +
+                "Дата и время: 2023-04-06T14:00\n" +
+                "Частота: minutely\n" +
+                "Исключения:\n" +
+                "  - Исключить СБ и ВС\n" +
+                "  - Исключить дни:\n" +
+                "    * 2023-04-12 (every 7 days)\n" +
+                "    * 2023-04-24 (every 21 days)\n" +
+                "    * 2023-04-07 (every 7 days)";
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText(sb.toString());
+        message.setText(sb);
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -387,21 +378,20 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private void initiateEditNotificationProcess(Long userId, Long chatId) {
         userActionStates.put(userId, UserActionState.WAITING_FOR_NOTIFICATION_TO_EDIT);
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("Пожалуйста, пришлите измененное уведомление согласно следующему шаблону. Для удобства скопируйте предыдущую версию уведомления и измените ее\n\n");
-        sb.append("ID 11\n");
-        sb.append("Текст уведомления: Все на дейли, сегодня шарит @name, @username!\n");
-        sb.append("Дата и время: 2023-04-06T14:00\n");
-        sb.append("Частота: minutely\n");
-        sb.append("Исключения:\n");
-        sb.append("  - Исключить СБ и ВС\n");
-        sb.append("  - Исключить дни:\n");
-        sb.append("    * 2023-04-12 (every 7 days)\n");
-        sb.append("    * 2023-04-24 (every 21 days)\n");
-        sb.append("    * 2023-04-07 (every 7 days)");
+        String sb = "Пожалуйста, пришлите измененное уведомление согласно следующему шаблону. Для удобства скопируйте предыдущую версию уведомления и измените ее\n\n" +
+                "ID 11\n" +
+                "Текст уведомления: Все на дейли, сегодня шарит @name, @username!\n" +
+                "Дата и время: 2023-04-06T14:00\n" +
+                "Частота: minutely\n" +
+                "Исключения:\n" +
+                "  - Исключить СБ и ВС\n" +
+                "  - Исключить дни:\n" +
+                "    * 2023-04-12 (every 7 days)\n" +
+                "    * 2023-04-24 (every 21 days)\n" +
+                "    * 2023-04-07 (every 7 days)";
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText(sb.toString());
+        message.setText(sb);
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -522,7 +512,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
 
         StringBuilder sb = new StringBuilder("List of users:\n\n");
         for (User user : users) {
-            sb.append("ID: " + user.getId()).append(", ")
+            sb.append("ID: ").append(user.getId()).append(", ")
                     .append(user.getName()).append(", @").append(user.getUsername()).append('\n');
         }
 
@@ -675,7 +665,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         StringBuilder sb = new StringBuilder();
         sb.append("Участники розыгрышей в этом чате:\n");
         for (User user : users) {
-            sb.append(user.getName() + ", @" + user.getUsername() + ", выиграл: " + user.isHaswon() + "\n");
+            sb.append(user.getName()).append(", @").append(user.getUsername()).append(", выиграл: ").append(user.isHaswon()).append("\n");
         }
         sendChatMessage(chatId, sb.toString());
     }
@@ -817,12 +807,10 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     @Scheduled(fixedRate = 60000, initialDelay = 1000) // Run every 60 seconds
     public void checkAndSendNotifications() {
         List<Notification> notifications = notificationRepository.findAll();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
         for (Notification notification : notifications) {
             LocalDateTime notificationDateTime = notification.getDatetime();
             LocalDateTime now = LocalDateTime.now();
-            //logger.info("Notification: {}, now: {}", notificationDateTime, now);
 
             if ((now.isEqual(notificationDateTime) || (now.isAfter(notificationDateTime) && now.isBefore(notificationDateTime.plusMinutes(1))))) {
                 if (!isNotificationExcluded(notification, now)) {
