@@ -668,6 +668,10 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
 
     private void showUsers(Long chatId) {
         List<User> users = userRepository.findByChatid(chatId);
+        if (users.isEmpty()) {
+            sendChatMessage(chatId, "Участники розыгрышей в этом чате отсутствуют");
+            return;
+        }
         StringBuilder sb = new StringBuilder();
         sb.append("Участники розыгрышей в этом чате:\n");
         for (User user : users) {
