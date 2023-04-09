@@ -549,6 +549,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         }
     }
 
+    // This method allows the user to edit Users in the specified chat.
+    // It displays a list of Users and provides an inline keyboard with Add, Delete, and Edit buttons.
     private void editUsers(Long chatId) {
         List<User> users = userRepository.findByChatid(chatId);
         if (users.isEmpty()) {
@@ -562,39 +564,14 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                     .append(user.getName()).append(", @").append(user.getUsername()).append('\n');
         }
 
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-
-        InlineKeyboardButton addButton = new InlineKeyboardButton("Add");
-        addButton.setCallbackData("add_users");
-
-        InlineKeyboardButton deleteButton = new InlineKeyboardButton("Delete");
-        deleteButton.setCallbackData("delete_users");
-
-        InlineKeyboardButton editButton = new InlineKeyboardButton("Edit");
-        editButton.setCallbackData("edit_user");
-
-        List<InlineKeyboardButton> keyboardButtonsRow = new ArrayList<>();
-        keyboardButtonsRow.add(addButton);
-        keyboardButtonsRow.add(deleteButton);
-        keyboardButtonsRow.add(editButton);
-
-        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-        rowList.add(keyboardButtonsRow);
-
-        inlineKeyboardMarkup.setKeyboard(rowList);
-
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
-        message.setText(sb.toString());
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to chat: {}", chatId, e);
-        }
+        // Create an inline keyboard markup for editing Users.
+        InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_users", "delete_users", "edit_user");
+        // Send the message with the inline keyboard to the chat.
+        sendMessageWithInlineKeyboard(chatId, sb.toString(), inlineKeyboardMarkup);
     }
 
+    // This method allows the user to edit Notifications in the specified chat.
+    // It displays a list of Notifications and provides an inline keyboard with Add, Delete, and Edit buttons.
     private void editNotifications(Long chatId) {
         List<Notification> notifications = notificationRepository.findByChatid(chatId);
         if (notifications.isEmpty()) {
@@ -602,40 +579,16 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             return;
         }
 
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        // Create an inline keyboard markup for editing Notifications.
+        InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_notification", "delete_notifications", "edit_notification");
+        // Send the message with the inline keyboard to the chat.
+        sendMessageWithInlineKeyboard(chatId, "Выберите действие:", inlineKeyboardMarkup);
 
-        InlineKeyboardButton addButton = new InlineKeyboardButton("Add");
-        addButton.setCallbackData("add_notification");
-
-        InlineKeyboardButton deleteButton = new InlineKeyboardButton("Delete");
-        deleteButton.setCallbackData("delete_notifications");
-
-        InlineKeyboardButton editButton = new InlineKeyboardButton("Edit");
-        editButton.setCallbackData("edit_notification");
-
-        List<InlineKeyboardButton> keyboardButtonsRow = new ArrayList<>();
-        keyboardButtonsRow.add(addButton);
-        keyboardButtonsRow.add(deleteButton);
-        keyboardButtonsRow.add(editButton);
-
-        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-        rowList.add(keyboardButtonsRow);
-
-        showNotifications(chatId);
-
-        inlineKeyboardMarkup.setKeyboard(rowList);
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
-        message.setText("Выберите действие:");
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to chat: {}", chatId, e);
-        }
     }
 
+    // This method allows the user to edit Chats.
+    // It displays a list of Chats and provides an inline keyboard with Add, Delete, and Edit buttons.
+    // The user must be an admin and in a private chat to edit Chats.
     private void editChats(Message message, Long chatId) {
         // Check if the chat is private
         if (message.getChat().isUserChat()) {
@@ -652,37 +605,10 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                                 .append(chat.getName()).append(", ").append(chat.getRole()).append('\n');
                     }
 
-                    InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-
-                    InlineKeyboardButton addButton = new InlineKeyboardButton("Add");
-                    addButton.setCallbackData("add_chats");
-
-                    InlineKeyboardButton deleteButton = new InlineKeyboardButton("Delete");
-                    deleteButton.setCallbackData("delete_chats");
-
-                    InlineKeyboardButton editButton = new InlineKeyboardButton("Edit");
-                    editButton.setCallbackData("edit_chats");
-
-                    List<InlineKeyboardButton> keyboardButtonsRow = new ArrayList<>();
-                    keyboardButtonsRow.add(addButton);
-                    keyboardButtonsRow.add(deleteButton);
-                    keyboardButtonsRow.add(editButton);
-
-                    List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-                    rowList.add(keyboardButtonsRow);
-
-
-                    inlineKeyboardMarkup.setKeyboard(rowList);
-                    SendMessage msg = new SendMessage();
-                    msg.setChatId(chatId.toString());
-                    msg.setText(sb.toString());
-                    msg.setReplyMarkup(inlineKeyboardMarkup);
-
-                    try {
-                        execute(msg);
-                    } catch (TelegramApiException e) {
-                        logger.error("Error sending message to chat: {}", chatId, e);
-                    }
+                    // Create an inline keyboard markup for editing Chats.
+                    InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_chats", "delete_chats", "edit_chats");
+                    // Send the message with the inline keyboard to the chat.
+                    sendMessageWithInlineKeyboard(chatId, sb.toString(), inlineKeyboardMarkup);
                 } else {
                     sendChatMessage(chatId, "У вас нет прав администратора для редактирования чата!");
                 }
@@ -691,6 +617,46 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             }
         } else {
             sendChatMessage(chatId, "Команда /editchats доступна только в приватных чатах!");
+        }
+    }
+
+    // This method creates an inline keyboard markup with Add, Delete, and Edit buttons.
+    // The provided callback data is used to set the appropriate callback for each button.
+    private InlineKeyboardMarkup createInlineKeyboardMarkup(String addCallbackData, String deleteCallbackData, String editCallbackData) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+
+        InlineKeyboardButton addButton = new InlineKeyboardButton("Add");
+        addButton.setCallbackData(addCallbackData);
+
+        InlineKeyboardButton deleteButton = new InlineKeyboardButton("Delete");
+        deleteButton.setCallbackData(deleteCallbackData);
+
+        InlineKeyboardButton editButton = new InlineKeyboardButton("Edit");
+        editButton.setCallbackData(editCallbackData);
+
+        List<InlineKeyboardButton> keyboardButtonsRow = new ArrayList<>();
+        keyboardButtonsRow.add(addButton);
+        keyboardButtonsRow.add(deleteButton);
+        keyboardButtonsRow.add(editButton);
+
+        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+        rowList.add(keyboardButtonsRow);
+
+        inlineKeyboardMarkup.setKeyboard(rowList);
+        return inlineKeyboardMarkup;
+    }
+
+    // This method sends a message with the provided text and inline keyboard markup to the specified chat.
+    private void sendMessageWithInlineKeyboard(Long chatId, String text, InlineKeyboardMarkup inlineKeyboardMarkup) {
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId.toString());
+        message.setText(text);
+        message.setReplyMarkup(inlineKeyboardMarkup);
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            logger.error("Error sending message to chat: {}", chatId, e);
         }
     }
 
