@@ -44,27 +44,46 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
     @Transactional
     @Override
     public SendMessage handleNotificationEditing(Map<Long, UserActionState> userActionStates, Message message, String text, Long chatId, Long userId) {
+        // Extract the ID from the text
+        Integer id = extractNotificationId(text);
+        if (id == null) {
+            return createErrorMessage(chatId, "Ошибка при парсинге ID. Пожалуйста, проверьте формат и попробуйте еще раз.");
+        }
+
         // Parse the notification from the message text
+        Notification notificationUpdated = NotificationUtils.parseNotificationText(text);
+        if (notificationUpdated == null) {
+            return createErrorMessage(chatId, "Ошибка при парсинге уведомления. Пожалуйста, проверьте формат и попробуйте еще раз.");
+        }
+
+        // Update the notification in the database
+        updateNotificationInDatabase(chatId, id, notificationUpdated);
+
+        // Remove the user from the UserActionStates map
+        userActionStates.remove(userId);
+
+        // Send a confirmation message to the user
+        return createSuccessMessage(chatId, "Уведомление успешно изменено");
+    }
+
+    private Integer extractNotificationId(String text) {
         String regex = "ID:\\s*(\\d+)";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(text);
         if (!matcher.find()) {
-            // Send an error message if the text could not be parsed
-            SendMessage msg = new SendMessage();
-            msg.setChatId(chatId.toString());
-            msg.setText("Ошибка при парсинге ID. Пожалуйста, проверьте формат и попробуйте еще раз.");
-            return msg;
+            return null;
         }
-        Integer id = Integer.parseInt(matcher.group(1));
-        Notification notificationUpdated = NotificationUtils.parseNotificationText(text);
-        if (notificationUpdated == null) {
-            // Send an error message if the text could not be parsed
-            SendMessage msg = new SendMessage();
-            msg.setChatId(chatId.toString());
-            msg.setText("Ошибка при парсинге уведомления. Пожалуйста, проверьте формат и попробуйте еще раз.");
-            return msg;
-        }
-        // Set the chat ID
+        return Integer.parseInt(matcher.group(1));
+    }
+
+    private SendMessage createErrorMessage(Long chatId, String messageText) {
+        SendMessage msg = new SendMessage();
+        msg.setChatId(chatId.toString());
+        msg.setText(messageText);
+        return msg;
+    }
+
+    private void updateNotificationInDatabase(Long chatId, Integer id, Notification notificationUpdated) {
         notificationUpdated.setChatid(chatId);
 
         Notification notificationCurrent = notificationRepository.findById(id).orElse(null);
@@ -78,16 +97,14 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
             // Save the notification to the database
             notificationRepository.save(notificationCurrent);
         }
+    }
 
-        // Remove the user from the UserActionStates map
-        userActionStates.remove(userId);
-
-        // Send a confirmation message to the user
+    private SendMessage createSuccessMessage(Long chatId, String messageText) {
         SendMessage msg = new SendMessage();
         msg.setChatId(chatId.toString());
-        msg.setText("Уведомление успешно изменено");
-
+        msg.setText(messageText);
         return msg;
     }
+
 }
 
