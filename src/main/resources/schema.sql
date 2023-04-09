@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.7
--- Dumped by pg_dump version 14.7
+-- Dumped from database version 14.7 (Homebrew)
+-- Dumped by pg_dump version 14.7 (Homebrew)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -50,7 +50,7 @@ CREATE SEQUENCE public.notifications_id_seq
 CREATE TABLE public.notifications (
     id integer DEFAULT nextval('public.notifications_id_seq'::regclass) NOT NULL,
     text character varying(255) NOT NULL,
-    datetime timestamp(6) without time zone NOT NULL,
+    datetime timestamp(6) with time zone NOT NULL,
     datetimexcluded jsonb,
     chatid bigint,
     repetition character varying(255) NOT NULL

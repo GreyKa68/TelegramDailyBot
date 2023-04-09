@@ -9,10 +9,11 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.time.ZonedDateTime;
 
 public class NotificationUtils {
     public static Notification parseNotificationText(String text) {
-        Pattern notificationPattern = Pattern.compile("Текст уведомления: (.+?)\\nДата и время: (.+?)\\nЧастота: (.+?)\\nИсключения:(.*)", Pattern.DOTALL);
+        Pattern notificationPattern = Pattern.compile("Текст уведомления:\\s?(.+?)\\nДата и время:\\s?(.+?)\\nЧастота:\\s?(.+?)\\nИсключения:(.*)", Pattern.DOTALL);
         Matcher matcher = notificationPattern.matcher(text);
 
         if (matcher.find()) {
@@ -21,8 +22,8 @@ public class NotificationUtils {
             String frequency = matcher.group(3).trim();
             String exclusionsText = matcher.group(4).trim();
 
-            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
-            LocalDateTime dateTime = LocalDateTime.parse(dateTimeStr, dateTimeFormatter);
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mmZ");
+            ZonedDateTime dateTime = ZonedDateTime.parse(dateTimeStr, dateTimeFormatter);
 
             ObjectMapper objectMapper = new ObjectMapper();
             ObjectNode exclusionsJson = objectMapper.createObjectNode();

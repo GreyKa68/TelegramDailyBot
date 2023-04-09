@@ -7,6 +7,7 @@ import lombok.Data;
 import org.hibernate.annotations.ColumnTransformer;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @Entity
@@ -19,7 +20,7 @@ public class Notification {
     private String text;
 
     @Column(name = "datetime")
-    private LocalDateTime datetime;
+    private ZonedDateTime datetime;
 
     @Column(name = "datetimexcluded", columnDefinition = "jsonb")
     @ColumnTransformer(read = "datetimexcluded", write = "CAST(? AS jsonb)")

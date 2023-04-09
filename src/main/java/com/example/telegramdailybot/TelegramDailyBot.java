@@ -30,8 +30,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -564,11 +563,11 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private void editUsers(Long chatId) {
         List<User> users = userRepository.findByChatid(chatId);
         if (users.isEmpty()) {
-            sendChatMessage(chatId, "Участники для этого чата отсутствуют");
+            sendChatMessage(chatId, "Участники розыгрышей в этом чате отсутствуют");
             return;
         }
 
-        StringBuilder sb = new StringBuilder("List of users:\n\n");
+        StringBuilder sb = new StringBuilder("Участники розыгрышей в этом чате:\n\n");
         for (User user : users) {
             sb.append("ID: ").append(user.getId()).append(", ")
                     .append(user.getName()).append(", @").append(user.getUsername()).append('\n');
@@ -589,11 +588,11 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             return;
         }
 
+        showNotifications(chatId);
         // Create an inline keyboard markup for editing Notifications.
         InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_notification", "delete_notifications", "edit_notification");
         // Send the message with the inline keyboard to the chat.
         sendMessageWithInlineKeyboard(chatId, "Выберите действие:", inlineKeyboardMarkup);
-
     }
 
     // This method allows the user to edit Chats.
@@ -609,7 +608,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                 // Check if the user has 'admin' role
                 if ("admin".equalsIgnoreCase(chatTemp.getRole())) {
                     List<Chat> chatList = chatRepository.findAll();
-                    StringBuilder sb = new StringBuilder("List of chats:\n\n");
+                    StringBuilder sb = new StringBuilder("Список чатов:\n\n");
                     for (Chat chat : chatList) {
                         sb.append(chat.getTelegramchatid()).append(", ")
                                 .append(chat.getName()).append(", ").append(chat.getRole()).append('\n');
@@ -702,12 +701,15 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         StringBuilder sb = new StringBuilder();
         sb.append("Уведомления для этого чата: \n\n");
 
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mmZ");
+
+        // Specify the +3 GMT timezone
+        ZoneId timeZone = ZoneId.of("GMT+3");
 
         for (Notification notification : notifications) {
             sb.append("ID: ").append(notification.getId()).append("\n");
             sb.append("Текст уведомления: ").append(notification.getText()).append("\n");
-            sb.append("Дата и время: ").append(notification.getDatetime().format(dateTimeFormatter)).append("\n");
+            sb.append("Дата и время: ").append(notification.getDatetime().withZoneSameInstant(ZoneId.of("GMT+3")).format(dateTimeFormatter)).append("\n");
             sb.append("Частота: ").append(notification.getRepetition()).append("\n");
 
             if (notification.getDatetimexcluded() != null) {
@@ -787,7 +789,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     }
 
     // This method checks if a given notification is excluded from being sent at the specified time.
-    private boolean isNotificationExcluded(Notification notification, LocalDateTime now) {
+    private boolean isNotificationExcluded(Notification notification, ZonedDateTime now) {
         // Retrieve the "datetimexcluded" configuration from the notification
         JsonNode datetimexcluded = notification.getDatetimexcluded();
         // If "datetimexcluded" is not set, the notification is not excluded.
@@ -846,8 +848,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         List<Notification> notifications = notificationRepository.findAll();
 
         for (Notification notification : notifications) {
-            LocalDateTime notificationDateTime = notification.getDatetime();
-            LocalDateTime now = LocalDateTime.now();
+            ZonedDateTime notificationDateTime = notification.getDatetime();
+            ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 
             // Check if the current time is within the 1-minute time window of the notification's scheduled time
             if ((now.isEqual(notificationDateTime) || (now.isAfter(notificationDateTime) && now.isBefore(notificationDateTime.plusMinutes(1))))) {
