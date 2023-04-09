@@ -4,6 +4,7 @@ package com.example.telegramdailybot;
 import com.example.telegramdailybot.repository.ChatRepository;
 import com.example.telegramdailybot.repository.NotificationRepository;
 import com.example.telegramdailybot.repository.UserRepository;
+import com.example.telegramdailybot.service.ChatGPT3Service;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.telegram.telegrambots.meta.TelegramBotsApi;

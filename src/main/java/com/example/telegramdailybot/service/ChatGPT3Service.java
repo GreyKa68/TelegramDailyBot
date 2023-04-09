@@ -1,4 +1,4 @@
-package com.example.telegramdailybot;
+package com.example.telegramdailybot.service;
 
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
