@@ -1,17 +1,34 @@
 # Telegram Daily Bot
 
-This is a backend application for a Telegram bot built with Spring Boot. The bot helps manage daily tasks and notifications for groups, allowing users to add, delete, and edit users, notifications, and chats.
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Introduction
+
+This is a backend application for a Telegram bot built with Spring Boot. The bot helps manage daily tasks and notifications for groups, allowing users to add, delete, and edit users, notifications, and chats. It also features interaction with ChatGPT3 for quick Q&A sessions.
 
 ## Features
 
-- Add, delete, and edit users
-- Add, delete, and edit notifications
-- Add, delete, and edit chats
-- Assign winners for daily tasks
-- Reset winners
-- Send time-based notifications
-- Show list of users and notifications
-- Interact with ChatGPT3
+- **User Management:**
+    - Add, delete, and edit users
+- **Notification Management:**
+    - Add, delete, and edit notifications
+    - Send time-based notifications
+    - Show list of notifications
+- **Chat Management:**
+    - Add, delete, and edit chats
+    - Show list of users
+    - Assign winners for daily tasks
+    - Reset winners
+- **ChatGPT3 Interaction:**
+    - Interact with ChatGPT3
 
 ## Prerequisites
 
