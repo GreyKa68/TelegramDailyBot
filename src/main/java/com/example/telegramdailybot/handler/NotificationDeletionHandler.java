@@ -1,6 +1,7 @@
 package com.example.telegramdailybot.handler;
 
 import com.example.telegramdailybot.TelegramDailyBotInterface;
+import com.example.telegramdailybot.model.Notification;
 import com.example.telegramdailybot.model.UserActionState;
 import com.example.telegramdailybot.repository.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,13 +46,15 @@ public class NotificationDeletionHandler implements TelegramDailyBotInterface {
     @Transactional
     @Override
     public SendMessage handleNotificationDeleting(Map<Long, UserActionState> userActionStates, Message message, String text, Long chatId, Long userId) {
-        // Your handleNotificationDeleting implementation
         String[] lines = text.split("\\n");
 
         for (String line : lines) {
-            notificationRepository.findById(Integer.parseInt(line)).ifPresent(notification ->
-                    notificationRepository.delete(notification)
-            );
+            int notificationId = Integer.parseInt(line);
+            Notification notification = notificationRepository.findById(notificationId).orElse(null);
+
+            if (notification != null && notification.getChatid().equals(chatId)) {
+                notificationRepository.deleteById(notificationId);
+            }
         }
 
         // Remove the user from the userDeletingStates map

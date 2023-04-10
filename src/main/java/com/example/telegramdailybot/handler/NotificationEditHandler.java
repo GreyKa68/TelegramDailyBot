@@ -95,7 +95,7 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
 
         Notification notificationCurrent = notificationRepository.findById(id).orElse(null);
 
-        if (notificationCurrent != null) {
+        if (notificationCurrent != null && notificationCurrent.getChatid().equals(chatId)) {
             notificationCurrent.setText(notificationUpdated.getText());
             notificationCurrent.setDatetime(notificationUpdated.getDatetime());
             notificationCurrent.setRepetition(notificationUpdated.getRepetition());

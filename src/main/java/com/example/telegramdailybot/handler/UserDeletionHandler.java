@@ -1,6 +1,8 @@
 package com.example.telegramdailybot.handler;
 
 import com.example.telegramdailybot.TelegramDailyBotInterface;
+import com.example.telegramdailybot.model.Notification;
+import com.example.telegramdailybot.model.User;
 import com.example.telegramdailybot.model.UserActionState;
 import com.example.telegramdailybot.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,9 +51,12 @@ public class UserDeletionHandler implements TelegramDailyBotInterface {
         String[] lines = text.split("\\n");
 
         for (String line : lines) {
-            userRepository.findById(Integer.parseInt(line)).ifPresent(user ->
-                    userRepository.delete(user)
-            );
+            int userIdtoDelete = Integer.parseInt(line);
+            User user = userRepository.findById(userIdtoDelete).orElse(null);
+
+            if (user != null && user.getChatid().equals(chatId)) {
+                userRepository.deleteById(userIdtoDelete);
+            }
         }
 
         // Remove the user from the userDeletingStates map
