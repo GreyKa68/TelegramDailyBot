@@ -58,7 +58,7 @@ Set your:
 - Connection to the database
 - (optionally) GPT-3 API key
 
-Open the `src/main/resources/application.properties` file and adjust the following properties:
+Rename `src/main/resources/application.properties.example` into `application.properties` and adjust the following properties:
 
 ```nano
 telegrambot.botUsername=YOUR_TELEGRAM_BOT_USERNAME
