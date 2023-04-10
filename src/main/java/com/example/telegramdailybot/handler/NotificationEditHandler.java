@@ -1,5 +1,6 @@
 package com.example.telegramdailybot.handler;
 
+import com.example.telegramdailybot.model.ParseResult;
 import com.example.telegramdailybot.util.NotificationUtils;
 import com.example.telegramdailybot.TelegramDailyBotInterface;
 import com.example.telegramdailybot.model.Notification;
@@ -56,10 +57,11 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
         }
 
         // Parse the notification from the message text
-        Notification notificationUpdated = NotificationUtils.parseNotificationText(text);
-        if (notificationUpdated == null) {
-            return createErrorMessage(chatId, "Ошибка при парсинге уведомления. Пожалуйста, проверьте формат и попробуйте еще раз.");
+        ParseResult parseResult = NotificationUtils.parseNotificationText(text);
+        if (parseResult.hasError()) {
+            return createErrorMessage(chatId, "Ошибка при парсинге уведомления. " + parseResult.getErrorMessage());
         }
+        Notification notificationUpdated = parseResult.getNotification();
 
         // Update the notification in the database
         updateNotificationInDatabase(chatId, id, notificationUpdated);

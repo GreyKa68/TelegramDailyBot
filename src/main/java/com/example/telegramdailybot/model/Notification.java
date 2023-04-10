@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.ColumnTransformer;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 @Data
