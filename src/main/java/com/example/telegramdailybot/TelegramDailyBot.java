@@ -2,10 +2,7 @@ package com.example.telegramdailybot;
 
 
 import com.example.telegramdailybot.handler.*;
-import com.example.telegramdailybot.model.Chat;
-import com.example.telegramdailybot.model.Notification;
-import com.example.telegramdailybot.model.User;
-import com.example.telegramdailybot.model.UserActionState;
+import com.example.telegramdailybot.model.*;
 import com.example.telegramdailybot.repository.ChatRepository;
 import com.example.telegramdailybot.repository.NotificationRepository;
 import com.example.telegramdailybot.repository.UserRepository;
@@ -525,12 +522,12 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     @Transactional
     private void handleNotificationAdding(Message message, String text, Long chatId, Long userId) {
         // Parse the notification from the message text
-        Notification notification = NotificationUtils.parseNotificationText(text);
-        if (notification == null) {
+        ParseResult parseResult = NotificationUtils.parseNotificationText(text);
+        if (parseResult.hasError()) {
             // Send an error message if the text could not be parsed
             SendMessage msg = new SendMessage();
             msg.setChatId(chatId.toString());
-            msg.setText("Ошибка при добавлении уведомления. Пожалуйста, проверьте соответствие шаблону");
+            msg.setText("Ошибка при добавлении уведомления. " + parseResult.getErrorMessage());
             try {
                 execute(msg);
             } catch (TelegramApiException e) {
@@ -538,6 +535,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             }
             return;
         }
+        Notification notification = parseResult.getNotification();
         // Set the chat ID
         notification.setChatid(chatId);
 
@@ -704,7 +702,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         for (Notification notification : notifications) {
             sb.append("ID: ").append(notification.getId()).append("\n");
             sb.append("Текст уведомления: ").append(notification.getText()).append("\n");
-            sb.append("Дата и время: ").append(notification.getDatetime().withZoneSameInstant(ZoneId.of("GMT+3")).format(dateTimeFormatter)).append("\n");
+            sb.append("Дата и время: ").append(notification.getDatetime().withZoneSameInstant(timeZone).format(dateTimeFormatter)).append("\n");
             sb.append("Частота: ").append(notification.getRepetition()).append("\n");
 
             if (notification.getDatetimexcluded() != null) {
