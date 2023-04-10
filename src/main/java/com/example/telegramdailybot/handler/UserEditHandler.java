@@ -58,7 +58,7 @@ public class UserEditHandler implements TelegramDailyBotInterface {
 
                 User user = userRepository.findById(id).orElse(null);
 
-                if (user != null) {
+                if (user != null && user.getChatid().equals(chatId)) {
                     user.setName(name);
                     user.setUsername(username);
                     userRepository.save(user);
