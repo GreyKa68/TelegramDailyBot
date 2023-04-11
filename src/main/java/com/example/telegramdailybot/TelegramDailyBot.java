@@ -776,6 +776,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
         message.setText(text);
+        message.setDisableWebPagePreview(true);
         try {
             execute(message);
         } catch (TelegramApiException e) {
