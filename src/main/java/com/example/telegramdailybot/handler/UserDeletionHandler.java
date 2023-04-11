@@ -1,9 +1,10 @@
 package com.example.telegramdailybot.handler;
 
 import com.example.telegramdailybot.TelegramDailyBotInterface;
-import com.example.telegramdailybot.model.Notification;
+import com.example.telegramdailybot.model.Chat;
 import com.example.telegramdailybot.model.User;
 import com.example.telegramdailybot.model.UserActionState;
+import com.example.telegramdailybot.repository.ChatRepository;
 import com.example.telegramdailybot.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,12 +13,16 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class UserDeletionHandler implements TelegramDailyBotInterface {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ChatRepository chatRepository;
 
     @Override
     public SendMessage handleUserEditing(Map<Long, UserActionState> userActionStates, Message message, String text, Long chatId, Long userId) {
@@ -48,14 +53,22 @@ public class UserDeletionHandler implements TelegramDailyBotInterface {
     @Override
     public SendMessage handleUserDeleting(Map<Long, UserActionState> userActionStates, Message message, String text, Long chatId, Long userId) {
         // Your handleUserDeleting implementation
-        String[] lines = text.split("\\n");
 
-        for (String line : lines) {
-            int userIdtoDelete = Integer.parseInt(line);
-            User user = userRepository.findById(userIdtoDelete).orElse(null);
+        Optional<Chat> optionalChat = chatRepository.findById(chatId);
+        if (optionalChat.isPresent()) {
+            Chat chatTemp = optionalChat.get();
 
-            if (user != null && user.getChatid().equals(chatId)) {
-                userRepository.deleteById(userIdtoDelete);
+            boolean isAdmin = chatTemp.getRole().equals("admin");
+
+            String[] lines = text.split("\\n");
+
+            for (String line : lines) {
+                int userIdtoDelete = Integer.parseInt(line);
+                User user = userRepository.findById(userIdtoDelete).orElse(null);
+
+                if (user != null && (isAdmin || user.getChatid().equals(chatId))) {
+                    userRepository.deleteById(userIdtoDelete);
+                }
             }
         }
 

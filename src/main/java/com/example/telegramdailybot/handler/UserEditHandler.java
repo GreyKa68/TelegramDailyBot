@@ -1,8 +1,10 @@
 package com.example.telegramdailybot.handler;
 
 import com.example.telegramdailybot.TelegramDailyBotInterface;
+import com.example.telegramdailybot.model.Chat;
 import com.example.telegramdailybot.model.User;
 import com.example.telegramdailybot.model.UserActionState;
+import com.example.telegramdailybot.repository.ChatRepository;
 import com.example.telegramdailybot.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -11,12 +13,16 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class UserEditHandler implements TelegramDailyBotInterface {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ChatRepository chatRepository;
 
 
     @Override
@@ -47,21 +53,29 @@ public class UserEditHandler implements TelegramDailyBotInterface {
     @Transactional
     @Override
     public SendMessage handleUserEditing(Map<Long, UserActionState> userActionStates, Message message, String text, Long chatId, Long userId) {
-        String[] lines = text.split("\\n");
 
-        for (String line : lines) {
-            String[] parts = line.split(",", 3);
-            if (parts.length == 3) {
-                Integer id = Integer.parseInt(parts[0].trim());
-                String name = parts[1].trim();
-                String username = parts[2].trim().replace("@", "");
+        Optional<Chat> optionalChat = chatRepository.findById(chatId);
+        if (optionalChat.isPresent()) {
+            Chat chatTemp = optionalChat.get();
 
-                User user = userRepository.findById(id).orElse(null);
+            boolean isAdmin = chatTemp.getRole().equals("admin");
 
-                if (user != null && user.getChatid().equals(chatId)) {
-                    user.setName(name);
-                    user.setUsername(username);
-                    userRepository.save(user);
+            String[] lines = text.split("\\n");
+
+            for (String line : lines) {
+                String[] parts = line.split(",", 3);
+                if (parts.length == 3) {
+                    Integer id = Integer.parseInt(parts[0].trim());
+                    String name = parts[1].trim();
+                    String username = parts[2].trim().replace("@", "");
+
+                    User user = userRepository.findById(id).orElse(null);
+
+                    if (user != null && (isAdmin || user.getChatid().equals(chatId))) {
+                        user.setName(name);
+                        user.setUsername(username);
+                        userRepository.save(user);
+                    }
                 }
             }
         }

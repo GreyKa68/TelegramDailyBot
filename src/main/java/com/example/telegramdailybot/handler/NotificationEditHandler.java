@@ -1,11 +1,13 @@
 package com.example.telegramdailybot.handler;
 
-import com.example.telegramdailybot.model.ParseResult;
-import com.example.telegramdailybot.util.NotificationUtils;
 import com.example.telegramdailybot.TelegramDailyBotInterface;
+import com.example.telegramdailybot.model.Chat;
 import com.example.telegramdailybot.model.Notification;
+import com.example.telegramdailybot.model.ParseResult;
 import com.example.telegramdailybot.model.UserActionState;
+import com.example.telegramdailybot.repository.ChatRepository;
 import com.example.telegramdailybot.repository.NotificationRepository;
+import com.example.telegramdailybot.util.NotificationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +15,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +24,10 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
 
     @Autowired
     private NotificationRepository notificationRepository;
+
+    @Autowired
+    private ChatRepository chatRepository;
+
 
     @Override
     public SendMessage handleUserEditing(Map<Long, UserActionState> userActionStates, Message message, String text, Long chatId, Long userId) {
@@ -91,18 +98,26 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
     }
 
     private void updateNotificationInDatabase(Long chatId, Integer id, Notification notificationUpdated) {
-        notificationUpdated.setChatid(chatId);
 
-        Notification notificationCurrent = notificationRepository.findById(id).orElse(null);
+        Optional<Chat> optionalChat = chatRepository.findById(chatId);
+        if (optionalChat.isPresent()) {
+            Chat chatTemp = optionalChat.get();
 
-        if (notificationCurrent != null && notificationCurrent.getChatid().equals(chatId)) {
-            notificationCurrent.setText(notificationUpdated.getText());
-            notificationCurrent.setDatetime(notificationUpdated.getDatetime());
-            notificationCurrent.setRepetition(notificationUpdated.getRepetition());
-            notificationCurrent.setChatid(notificationUpdated.getChatid());
-            notificationCurrent.setDatetimexcluded(notificationUpdated.getDatetimexcluded());
-            // Save the notification to the database
-            notificationRepository.save(notificationCurrent);
+            boolean isAdmin = chatTemp.getRole().equals("admin");
+
+            notificationUpdated.setChatid(chatId);
+
+            Notification notificationCurrent = notificationRepository.findById(id).orElse(null);
+
+            if (notificationCurrent != null && (isAdmin || notificationCurrent.getChatid().equals(chatId))) {
+                notificationCurrent.setText(notificationUpdated.getText());
+                notificationCurrent.setDatetime(notificationUpdated.getDatetime());
+                notificationCurrent.setRepetition(notificationUpdated.getRepetition());
+                notificationCurrent.setChatid(notificationUpdated.getChatid());
+                notificationCurrent.setDatetimexcluded(notificationUpdated.getDatetimexcluded());
+                // Save the notification to the database
+                notificationRepository.save(notificationCurrent);
+            }
         }
     }
 
