@@ -101,15 +101,18 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         switch (command.toLowerCase()) {
             case "/start" -> handleStartCommand(chatId);
             case "/getchatid" -> handleGetChatIdCommand(chatId);
-            default -> {
-                if (chatRepository.existsById(chatId)) {
-                    handleChatCommand(message, command, chatId);
-                } else {
-                    sendChatMessage(chatId, "Вы не зарегистрированы в боте!");
-                }
-            }
+            case "/next" -> nextWinner(chatId);
+            case "/resetwinners" -> resetWinners(chatId);
+            case "/showusers" -> showUsers(chatId);
+            case "/shownotifications" -> showNotifications(chatId);
+            case "/editusers" -> editUsers(chatId);
+            case "/editnotifications" -> editNotifications(chatId);
+            case "/editchats" -> editChats(message, chatId);
+            case "/askchatgpt3" -> askChatGPT3(message, chatId);
+            default -> sendChatMessage(chatId, "Неизвестная команда!");
         }
     }
+
 
     private void handleNonCommandTextMessage(Message message, String text, Long chatId) {
         Long userId = message.getFrom().getId();
@@ -118,7 +121,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         if (userActionState == null) {
             logger.warn("UserActionState is null for user: {}", userId);
             // You can either return here or set a default value for userActionState
-            sendChatMessage(chatId, "Сначала выберите команду");
+            sendChatMessage(chatId, "Сначала выберите команду из списка");
             return;
         }
 
@@ -154,9 +157,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                 sendChatMessage(chatId, "Подождите, пожалуйста, ChatGPT пишет ответ...");
                 // Remove the user from the userAddingStates map
                 userActionStates.remove(userId);
-                chatGpt3Service.chat(text).thenAcceptAsync(responseText -> {
-                    sendChatMessage(chatId, responseText);
-                });
+                chatGpt3Service.chat(text).thenAcceptAsync(responseText -> sendChatMessage(chatId, responseText));
             }
         }
     }
@@ -170,7 +171,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         switch (data) {
             case "add_users" -> initiateAddUsersProcess(userId, chatId);
             case "delete_users" -> initiateDeleteUsersProcess(userId, chatId);
-            case "edit_user" -> initiateEditUsersProcess(userId, chatId);
+            case "edit_users" -> initiateEditUsersProcess(userId, chatId);
             case "add_notification" -> initiateAddNotificationProcess(userId, chatId);
             case "delete_notifications" -> initiateDeleteNotificationsProcess(userId, chatId);
             case "edit_notification" -> initiateEditNotificationProcess(userId, chatId);
@@ -207,20 +208,6 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
 
     private void handleGetChatIdCommand(Long chatId) {
         sendChatMessage(chatId, "ID вашего чата: " + chatId);
-    }
-
-    private void handleChatCommand(Message message, String command, Long chatId) {
-        switch (command.toLowerCase()) {
-            case "/next" -> nextWinner(chatId);
-            case "/resetwinners" -> resetWinners(chatId);
-            case "/showusers" -> showUsers(chatId);
-            case "/shownotifications" -> showNotifications(chatId);
-            case "/editusers" -> editUsers(chatId);
-            case "/editnotifications" -> editNotifications(chatId);
-            case "/editchats" -> editChats(message, chatId);
-            case "/askchatgpt3" -> askChatGPT3(message, chatId);
-            default -> sendChatMessage(chatId, "Неизвестная команда!");
-        }
     }
 
     private void askChatGPT3(Message message, Long chatId) {
@@ -433,7 +420,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         text = text + "\n Выберите действие:";
 
         // Create an inline keyboard markup for editing Users.
-        InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_users", "delete_users", "edit_user");
+        InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_users", "delete_users", "edit_users");
         // Send the message with the inline keyboard to the chat.
         sendMessageWithInlineKeyboard(chatId, text, inlineKeyboardMarkup);
     }
