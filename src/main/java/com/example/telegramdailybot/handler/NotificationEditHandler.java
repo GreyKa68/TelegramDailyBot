@@ -103,14 +103,12 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
         if (optionalChat.isPresent()) {
             Chat chatTemp = optionalChat.get();
 
-            boolean isAdmin = false;
+            boolean isAdmin;
             if (chatTemp.getRole() != null) {
                 isAdmin = chatTemp.getRole().equals("admin");
             } else {
                 isAdmin = false;
             }
-
-            notificationUpdated.setChatid(chatId);
 
             Notification notificationCurrent = notificationRepository.findById(id).orElse(null);
 
@@ -118,7 +116,6 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
                 notificationCurrent.setText(notificationUpdated.getText());
                 notificationCurrent.setDatetime(notificationUpdated.getDatetime());
                 notificationCurrent.setRepetition(notificationUpdated.getRepetition());
-                notificationCurrent.setChatid(notificationUpdated.getChatid());
                 notificationCurrent.setDatetimexcluded(notificationUpdated.getDatetimexcluded());
                 // Save the notification to the database
                 notificationRepository.save(notificationCurrent);
