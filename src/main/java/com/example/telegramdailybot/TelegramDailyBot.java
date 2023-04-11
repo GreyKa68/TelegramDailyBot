@@ -83,15 +83,11 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         String text = message.getText();
         Long chatId = message.getChatId();
 
-        if (isCommand(text)) {
+        if (message.isCommand()) {
             handleCommand(message, text, chatId);
         } else {
             handleNonCommandTextMessage(message, text, chatId);
         }
-    }
-
-    private boolean isCommand(String text) {
-        return text.startsWith("/");
     }
 
     private void handleCommand(Message message, String text, Long chatId) {
@@ -105,7 +101,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         switch (command.toLowerCase()) {
             case "/start" -> handleStartCommand(chatId);
             case "/getchatid" -> handleGetChatIdCommand(chatId);
-            default -> handleChatCommand(message, command, chatId);
+            default -> {
+                if (chatRepository.existsById(chatId)) {
+                    handleChatCommand(message, command, chatId);
+                } else {
+                    sendChatMessage(chatId, "Вы не зарегистрированы в боте!");
+                }
+            }
         }
     }
 
@@ -124,69 +126,36 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             case WAITING_FOR_USERS_TO_ADD -> handleUserAdding(message, text, chatId, userId);
             case WAITING_FOR_USERS_TO_DELETE -> {
                 SendMessage msg = userDeletionHandler.handleUserDeleting(userActionStates, message, text, chatId, userId);
-                try {
-                    execute(msg);
-                } catch (TelegramApiException e) {
-                    logger.error("Error sending message to user: {}", userId, e);
-                }
+                sendChatMessage(chatId, msg.getText());
             }
             case WAITING_FOR_USERS_TO_EDIT -> {
                 SendMessage msg = userEditHandler.handleUserEditing(userActionStates, message, text, chatId, userId);
-                try {
-                    execute(msg);
-                } catch (TelegramApiException e) {
-                    logger.error("Error sending message to user: {}", userId, e);
-                }
+                sendChatMessage(chatId, msg.getText());
             }
             case WAITING_FOR_NOTIFICATION_TO_ADD -> handleNotificationAdding(message, text, chatId, userId);
             case WAITING_FOR_NOTIFICATION_TO_DELETE -> {
                 SendMessage msg = notificationDeletionHandler.handleNotificationDeleting(userActionStates, message, text, chatId, userId);
-                try {
-                    execute(msg);
-                } catch (TelegramApiException e) {
-                    logger.error("Error sending message to user: {}", userId, e);
-                }
+                sendChatMessage(chatId, msg.getText());
             }
             case WAITING_FOR_NOTIFICATION_TO_EDIT -> {
                 SendMessage msg = notificationEditHandler.handleNotificationEditing(userActionStates, message, text, chatId, userId);
-                try {
-                    execute(msg);
-                } catch (TelegramApiException e) {
-                    logger.error("Error sending message to user: {}", userId, e);
-                }
+                sendChatMessage(chatId, msg.getText());
             }
             case WAITING_FOR_CHATS_TO_ADD -> handleChatsAdding(message, text, chatId, userId);
             case WAITING_FOR_CHATS_TO_DELETE -> {
                 SendMessage msg = chatDeletionHandler.handleChatDeleting(userActionStates, message, text, chatId, userId);
-                try {
-                    execute(msg);
-                } catch (TelegramApiException e) {
-                    logger.error("Error sending message to user: {}", userId, e);
-                }
+                sendChatMessage(chatId, msg.getText());
             }
             case WAITING_FOR_CHATS_TO_EDIT -> {
                 SendMessage msg = chatEditHandler.handleChatEditing(userActionStates, message, text, chatId, userId);
-                try {
-                    execute(msg);
-                } catch (TelegramApiException e) {
-                    logger.error("Error sending message to user: {}", userId, e);
-                }
+                sendChatMessage(chatId, msg.getText());
             }
             case WAITING_FOR_CHATGPT3_QUERY -> {
                 sendChatMessage(chatId, "Подождите, пожалуйста, ChatGPT пишет ответ...");
                 // Remove the user from the userAddingStates map
                 userActionStates.remove(userId);
                 chatGpt3Service.chat(text).thenAcceptAsync(responseText -> {
-                    SendMessage responseMsg = new SendMessage();
-                    responseMsg.setChatId(chatId.toString());
-                    responseMsg.setText(responseText);
-
-                    try {
-                        execute(responseMsg);
-                    } catch (TelegramApiException e) {
-                        logger.error("Error sending message to user: {}", userId, e);
-                    }
-
+                    sendChatMessage(chatId, responseText);
                 });
             }
         }
@@ -260,52 +229,29 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
 
         userActionStates.put(userId, UserActionState.WAITING_FOR_CHATGPT3_QUERY);
 
-        SendMessage responseMessage = new SendMessage();
-        responseMessage.setChatId(chatId.toString());
-        responseMessage.setText("Напишите свой вопрос ChatGPT3");
-        try {
-            execute(responseMessage);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to user: {}", userId, e);
-        }
+        sendChatMessage(chatId, "Напишите свой вопрос ChatGPT3");
     }
 
     private void initiateAddUsersProcess(Long userId, Long chatId) {
         userActionStates.put(userId, UserActionState.WAITING_FOR_USERS_TO_ADD);
-
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
         String text = """
                 Пожалуйста, вышлите через запятую: имя, @username. Например:
 
                 Вася,@vasyatelegram
                 Петя,@evilusername
                 Эвелина,@evacool""";
-        message.setText(text);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to user: {}", userId, e);
-        }
+        sendChatMessage(chatId, text);
     }
 
     private void initiateAddChatsProcess(Long userId, Long chatId) {
         userActionStates.put(userId, UserActionState.WAITING_FOR_CHATS_TO_ADD);
-
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
         String text = """
                 Пожалуйста, вышлите через запятую: ID, название чата, роль. Например:
 
                 12345678, Чат команды1, admin
                 12345678, Чат команды2, user
                 12345678, Иван Иванов, admin""";
-        message.setText(text);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to user: {}", userId, e);
-        }
+        sendChatMessage(chatId, text);
     }
 
     private void initiateAddNotificationProcess(Long userId, Long chatId) {
@@ -323,105 +269,62 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                     * 2023-04-12 (every 7 days)
                     * 2023-04-24 (every 21 days)
                     * 2023-04-07 (every 7 days)""";
-
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
-        message.setText(text);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to user: {}", userId, e);
-        }
+        sendChatMessage(chatId, text);
     }
 
     private void initiateDeleteUsersProcess(Long userId, Long chatId) {
         userActionStates.put(userId, UserActionState.WAITING_FOR_USERS_TO_DELETE);
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
         String text = """
                 Пожалуйста, вышлите ID участников, которых вы хотите удалить, каждый ID с новой строчки. Например:
 
                 10
                 11
                 12""";
-        message.setText(text);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to user: {}", userId, e);
-        }
+        sendChatMessage(chatId, text);
     }
 
     private void initiateDeleteChatsProcess(Long userId, Long chatId) {
         userActionStates.put(userId, UserActionState.WAITING_FOR_CHATS_TO_DELETE);
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
         String text = """
                 Пожалуйста, вышлите ID чатов, которых вы хотите удалить, каждый ID с новой строчки. Например:
 
                 10
                 11
                 12""";
-        message.setText(text);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to user: {}", userId, e);
-        }
+        sendChatMessage(chatId, text);
     }
 
     private void initiateDeleteNotificationsProcess(Long userId, Long chatId) {
         userActionStates.put(userId, UserActionState.WAITING_FOR_NOTIFICATION_TO_DELETE);
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
         String text = """
                 Пожалуйста, вышлите ID уведомлений, которые вы хотите удалить, каждый ID с новой строчки. Например:
 
                 10
                 11
                 12""";
-        message.setText(text);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to user: {}", userId, e);
-        }
+        sendChatMessage(chatId, text);
     }
 
     private void initiateEditUsersProcess(Long userId, Long chatId) {
         userActionStates.put(userId, UserActionState.WAITING_FOR_USERS_TO_EDIT);
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
         String text = """
                 Пожалуйста, вышлите через запятую: ID участника, которого вы хотите изменить, имя, username. Например:
 
                 10,Вася,vasyatelegram
                 11,Петя,evilusername
                 12,Эвелина,evacool""";
-        message.setText(text);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to user: {}", userId, e);
-        }
+        sendChatMessage(chatId, text);
     }
 
     private void initiateEditChatsProcess(Long userId, Long chatId) {
         userActionStates.put(userId, UserActionState.WAITING_FOR_CHATS_TO_EDIT);
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
         String text = """
                 Пожалуйста, вышлите через запятую: ID чата, который вы хотите изменить, название, роль. Например:
 
                 10,Scrum команда1,
                 11,Петя,admin
                 12,Scrum команда2,""";
-        message.setText(text);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to user: {}", userId, e);
-        }
+        sendChatMessage(chatId, text);
     }
 
     private void initiateEditNotificationProcess(Long userId, Long chatId) {
@@ -440,15 +343,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                     * 2023-04-12 (every 7 days)
                     * 2023-04-24 (every 21 days)
                     * 2023-04-07 (every 7 days)""";
-
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
-        message.setText(text);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to user: {}", userId, e);
-        }
+        sendChatMessage(chatId, text);
     }
 
     @Transactional
@@ -475,14 +370,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         userActionStates.remove(userId);
 
         // Send a confirmation message to the user
-        SendMessage msg = new SendMessage();
-        msg.setChatId(chatId.toString());
-        msg.setText("Участники успешно добавлены");
-        try {
-            execute(msg);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to user: {}", userId, e);
-        }
+        sendChatMessage(chatId, "Участники успешно добавлены");
     }
 
     @Transactional
@@ -509,14 +397,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         userActionStates.remove(userId);
 
         // Send a confirmation message to the user
-        SendMessage msg = new SendMessage();
-        msg.setChatId(chatId.toString());
-        msg.setText("Чаты успешно добавлены");
-        try {
-            execute(msg);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to user: {}", userId, e);
-        }
+        sendChatMessage(chatId, "Чаты успешно добавлены");
     }
 
     @Transactional
@@ -525,14 +406,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         ParseResult parseResult = NotificationUtils.parseNotificationText(text);
         if (parseResult.hasError()) {
             // Send an error message if the text could not be parsed
-            SendMessage msg = new SendMessage();
-            msg.setChatId(chatId.toString());
-            msg.setText("Ошибка при добавлении уведомления. " + parseResult.getErrorMessage());
-            try {
-                execute(msg);
-            } catch (TelegramApiException e) {
-                logger.error("Error sending message to user: {}", userId, e);
-            }
+            sendChatMessage(chatId, "Ошибка при добавлении уведомления. " + parseResult.getErrorMessage());
             return;
         }
         Notification notification = parseResult.getNotification();
@@ -546,14 +420,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         userActionStates.remove(userId);
 
         // Send a confirmation message to the user
-        SendMessage msg = new SendMessage();
-        msg.setChatId(chatId.toString());
-        msg.setText("Уведомление успешно добавлено");
-        try {
-            execute(msg);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to user: {}", userId, e);
-        }
+        sendChatMessage(chatId, "Уведомление успешно добавлено");
     }
 
     // This method allows the user to edit Users in the specified chat.
@@ -790,7 +657,6 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             }
             sb.append("\n");
         }
-
         return sb.toString();
     }
 
@@ -895,7 +761,6 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                 }
             }
         }
-
         // If none of the exclusion conditions apply, the notification is not excluded
         return false;
     }
@@ -970,3 +835,4 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     }
 
 }
+
