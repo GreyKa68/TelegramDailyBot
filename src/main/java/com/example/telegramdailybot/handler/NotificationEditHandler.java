@@ -103,7 +103,12 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
         if (optionalChat.isPresent()) {
             Chat chatTemp = optionalChat.get();
 
-            boolean isAdmin = chatTemp.getRole().equals("admin");
+            boolean isAdmin = false;
+            if (chatTemp.getRole() != null) {
+                isAdmin = chatTemp.getRole().equals("admin");
+            } else {
+                isAdmin = false;
+            }
 
             notificationUpdated.setChatid(chatId);
 
