@@ -6,15 +6,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.time.ZonedDateTime;
 
 public class NotificationUtils {
 
-    public static ParseResult parseNotificationText(String text) {
+    public static ParseResult parseNotificationText(String text, ZoneId timeZone) {
         Pattern notificationPattern = Pattern.compile("Текст уведомления:\\s?(.+?)\\nДата и время:\\s?(.+?)\\nЧастота:\\s?(.+?)\\nИсключения:(.*)", Pattern.DOTALL);
         Matcher matcher = notificationPattern.matcher(text);
         if (matcher.find()) {
@@ -22,13 +24,15 @@ public class NotificationUtils {
             String dateTimeStr = matcher.group(2).trim();
             String frequency = matcher.group(3).trim();
             String exclusionsText = matcher.group(4).trim();
-            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mmZ");
-            ZonedDateTime dateTime;
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+            LocalDateTime localDateTime;
             try {
-                dateTime = ZonedDateTime.parse(dateTimeStr, dateTimeFormatter);
+                localDateTime = LocalDateTime.parse(dateTimeStr, dateTimeFormatter);
             } catch (DateTimeParseException e) {
                 return new ParseResult(null, "Ошибка при парсинге даты и времени: " + dateTimeStr);
             }
+            // Convert the LocalDateTime to a ZonedDateTime using the provided timeZone
+            ZonedDateTime dateTime = localDateTime.atZone(timeZone);
 
             ObjectMapper objectMapper = new ObjectMapper();
             ObjectNode exclusionsJson = objectMapper.createObjectNode();

@@ -1,9 +1,11 @@
 telegrambot.botUsername=YOUR_TELEGRAM_BOT_USERNAME
 telegrambot.botToken:=YOUR_TELEGRAM_BOT_TOKEN
+telegrambot.timezone=Europe/Moscow
 spring.datasource.url=jdbc:postgresql://localhost:5432/YOUR_DATABASE_NAME
 spring.datasource.username=YOUR_DATABASE_USERNAME
 spring.datasource.password=YOUR_DATABASE_PASSWORD
 spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.jdbc.time_zone=UTC
 openai.token=YOUR_GPT3_API_KEY
 openai.timeout=60
 openai.maxTokens=150

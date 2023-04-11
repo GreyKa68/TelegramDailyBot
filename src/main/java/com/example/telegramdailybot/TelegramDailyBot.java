@@ -27,8 +27,12 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.time.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 
@@ -159,7 +163,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                 sendChatMessage(chatId, msg.getText());
             }
             case WAITING_FOR_NOTIFICATION_TO_EDIT -> {
-                SendMessage msg = notificationEditHandler.handleNotificationEditing(userActionStates, message, text, chatId, userId);
+                SendMessage msg = notificationEditHandler.handleNotificationEditing(userActionStates, message, text, chatId, userId, properties.getTimeZone());
                 sendChatMessage(chatId, msg.getText());
             }
             case WAITING_FOR_CHATS_TO_ADD -> handleChatsAdding(message, text, chatId, userId);
@@ -284,7 +288,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                 Пожалуйста, пришлите уведомление согласно следующему шаблону. Для удобства шаблон можно скопировать, вставить и отредактировать
 
                 Текст уведомления: Все на дейли, сегодня шарит @name, @username!
-                Дата и время: 2023-04-06T14:00+0300
+                Дата и время: 2023-04-06T14:00
                 Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}
                 Исключения:
                   - Исключить СБ и ВС
@@ -358,7 +362,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                                 
                 ID 11
                 Текст уведомления: Все на дейли, сегодня шарит @name, @username!
-                Дата и время: 2023-04-06T14:00+0300
+                Дата и время: 2023-04-06T14:00
                 Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}
                 Исключения:
                   - Исключить СБ и ВС
@@ -426,7 +430,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     @Transactional
     private void handleNotificationAdding(Message message, String text, Long chatId, Long userId) {
         // Parse the notification from the message text
-        ParseResult parseResult = NotificationUtils.parseNotificationText(text);
+        ParseResult parseResult = NotificationUtils.parseNotificationText(text, properties.getTimeZone());
         if (parseResult.hasError()) {
             // Send an error message if the text could not be parsed
             sendChatMessage(chatId, "Ошибка при добавлении уведомления. " + parseResult.getErrorMessage());
@@ -630,10 +634,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         StringBuilder sb = new StringBuilder();
         sb.append("Уведомления для этого чата: \n\n");
 
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mmZ");
-
-        // Specify the +3 GMT timezone
-        ZoneId timeZone = ZoneId.of("GMT+3");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
         for (Notification notification : notifications) {
             for (String field : fieldsToDisplay) {
@@ -652,7 +653,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                     }
                     case "datetime" -> {
                         String customHeader = customHeaders.getOrDefault(field, field);
-                        sb.append(customHeader).append(notification.getDatetime().withZoneSameInstant(timeZone).format(dateTimeFormatter)).append("\n");
+                        sb.append(customHeader).append(notification.getDatetime().withZoneSameInstant(properties.getTimeZone()).format(dateTimeFormatter)).append("\n");
                     }
                     case "repetition" -> {
                         String customHeader = customHeaders.getOrDefault(field, field);
@@ -766,12 +767,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                 int frequency = skipDay.get("frequency").asInt();
                 String dayStr = skipDay.get("day").asText();
                 LocalDateTime day = LocalDate.parse(dayStr, dateFormatter).atStartOfDay();
+                LocalDateTime nowLocal = now.withZoneSameInstant(properties.getTimeZone()).toLocalDateTime().toLocalDate().atStartOfDay();
                 // Calculate the number of days between the given day and the current time
-                long daysBetween = java.time.Duration.between(day, now).toDays();
+                long daysBetween = ChronoUnit.DAYS.between(nowLocal, day);
 
                 // If the days between the given day and now is a multiple of the frequency,
                 // the notification is excluded
-                if (daysBetween % frequency == 0) {
+                if (daysBetween == 0) {
                     // Update the "day" value in the "skip_days" array
                     LocalDateTime newDay = day.plusDays(frequency);
                     ((ObjectNode) skipDay).put("day", newDay.format(dateFormatter));
