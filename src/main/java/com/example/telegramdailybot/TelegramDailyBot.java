@@ -559,22 +559,15 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     // This method allows the user to edit Users in the specified chat.
     // It displays a list of Users and provides an inline keyboard with Add, Delete, and Edit buttons.
     private void editUsers(Long chatId) {
-        List<User> users = userRepository.findByChatid(chatId);
-        StringBuilder sb = new StringBuilder();
-        if (users.isEmpty()) {
-            sb.append("Участники розыгрышей в этом чате отсутствуют");
-        } else {
-            sb .append("Участники розыгрышей в этом чате:\n\n");
-            for (User user : users) {
-                sb.append("ID: ").append(user.getId()).append(", ")
-                        .append(user.getName()).append(", @").append(user.getUsername()).append('\n');
-            }
-        }
+        List<String> fieldsToDisplay = Arrays.asList("id", "name", "username");
+        Map<String, String> customHeaders = new HashMap<>();
+        customHeaders.put("name", "имя");
+        String text = generateUserListMessage(chatId, fieldsToDisplay, customHeaders);
 
         // Create an inline keyboard markup for editing Users.
         InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_users", "delete_users", "edit_user");
         // Send the message with the inline keyboard to the chat.
-        sendMessageWithInlineKeyboard(chatId, sb.toString(), inlineKeyboardMarkup);
+        sendMessageWithInlineKeyboard(chatId, text, inlineKeyboardMarkup);
     }
 
     // This method allows the user to edit Notifications in the specified chat.
@@ -673,18 +666,61 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     }
 
     private void showUsers(Long chatId) {
+        List<String> fieldsToDisplay = Arrays.asList("name", "username", "haswon");
+        Map<String, String> customHeaders = new HashMap<>();
+        customHeaders.put("name", "имя");
+        customHeaders.put("haswon", "выиграл");
+        String text = generateUserListMessage(chatId, fieldsToDisplay, customHeaders);
+        sendChatMessage(chatId, text);
+    }
+
+    public String generateUserListMessage(Long chatId, List<String> fieldsToDisplay, Map<String, String> customHeaders) {
         List<User> users = userRepository.findByChatid(chatId);
         if (users.isEmpty()) {
-            sendChatMessage(chatId, "Участники розыгрышей в этом чате отсутствуют");
-            return;
+            return "Участники розыгрышей в этом чате отсутствуют";
         }
+
         StringBuilder sb = new StringBuilder();
         sb.append("Участники розыгрышей в этом чате:\n");
-        for (User user : users) {
-            sb.append(user.getName()).append(", @").append(user.getUsername()).append(", выиграл: ").append(user.isHaswon()).append("\n");
+
+        // Add headers row
+        for (String field : fieldsToDisplay) {
+            sb.append("| ");
+            String customHeader = customHeaders.getOrDefault(field, field);
+            sb.append(customHeader);
+            sb.append(" ");
         }
-        sendChatMessage(chatId, sb.toString());
+        sb.append("|\n");
+
+        // Add values
+        for (User user : users) {
+            for (String field : fieldsToDisplay) {
+                sb.append("| ");
+                switch (field) {
+                    case "id":
+                        sb.append(user.getId());
+                        break;
+                    case "chatid":
+                        sb.append(user.getChatid());
+                        break;
+                    case "name":
+                        sb.append(user.getName());
+                        break;
+                    case "username":
+                        sb.append(user.getUsername());
+                        break;
+                    case "haswon":
+                        sb.append(user.isHaswon() ? "Yes" : "No");
+                        break;
+                }
+                sb.append(" ");
+            }
+            sb.append("|\n");
+        }
+
+        return sb.toString();
     }
+
 
     private void showNotifications(Long chatId) {
         List<Notification> notifications = notificationRepository.findByChatid(chatId);
