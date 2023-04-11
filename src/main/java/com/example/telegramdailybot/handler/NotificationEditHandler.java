@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -56,7 +57,7 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
 
     @Transactional
     @Override
-    public SendMessage handleNotificationEditing(Map<Long, UserActionState> userActionStates, Message message, String text, Long chatId, Long userId) {
+    public SendMessage handleNotificationEditing(Map<Long, UserActionState> userActionStates, Message message, String text, Long chatId, Long userId, ZoneId timeZone) {
         // Extract the ID from the text
         Integer id = extractNotificationId(text);
         if (id == null) {
@@ -64,7 +65,7 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
         }
 
         // Parse the notification from the message text
-        ParseResult parseResult = NotificationUtils.parseNotificationText(text);
+        ParseResult parseResult = NotificationUtils.parseNotificationText(text, timeZone);
         if (parseResult.hasError()) {
             return createErrorMessage(chatId, "Ошибка при парсинге уведомления. " + parseResult.getErrorMessage());
         }

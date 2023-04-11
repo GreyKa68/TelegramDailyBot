@@ -63,12 +63,15 @@ Rename `src/main/resources/application.properties.example` into `application.pro
 ```nano
 telegrambot.botUsername=YOUR_TELEGRAM_BOT_USERNAME
 telegrambot.botToken:=YOUR_TELEGRAM_BOT_TOKEN
+telegrambot.timezone=YOUR_TIMEZONE
 spring.datasource.url=jdbc:postgresql://localhost:5432/YOUR_DATABASE_NAME
 spring.datasource.username=YOUR_DATABASE_USERNAME
 spring.datasource.password=YOUR_DATABASE_PASSWORD
 openai.token=YOUR_GPT3_API_KEY
 ```
-application.properties should be placed in the same folder as the jar file.
+
+When setting your timezone, use the IANA timezone format, for example `Europe/Berlin`.
+application.properties should be kept in the same folder as the jar file.
 
 ### Step 4: Build the project
 

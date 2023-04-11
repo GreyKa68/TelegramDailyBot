@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.Optional;
 
@@ -36,7 +37,7 @@ public class UserEditHandler implements TelegramDailyBotInterface {
     }
 
     @Override
-    public SendMessage handleNotificationEditing(Map<Long, UserActionState> userActionStates, Message message, String text, Long chatId, Long userId) {
+    public SendMessage handleNotificationEditing(Map<Long, UserActionState> userActionStates, Message message, String text, Long chatId, Long userId, ZoneId timeZone) {
         return null;
     }
 
