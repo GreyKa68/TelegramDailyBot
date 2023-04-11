@@ -58,7 +58,7 @@ public class UserEditHandler implements TelegramDailyBotInterface {
         if (optionalChat.isPresent()) {
             Chat chatTemp = optionalChat.get();
 
-            boolean isAdmin = false;
+            boolean isAdmin;
             if (chatTemp.getRole() != null) {
                 isAdmin = chatTemp.getRole().equals("admin");
             } else {
