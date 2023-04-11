@@ -663,7 +663,9 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     }
 
     private void resetWinners(Long chatId) {
-        for (User user : userRepository.findAll()) {
+        List<User> users = userRepository.findByChatid(chatId);
+
+        for (User user : users) {
             user.setHaswon(false);
             userRepository.save(user);
         }
