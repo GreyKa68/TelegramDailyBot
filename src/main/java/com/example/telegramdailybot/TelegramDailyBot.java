@@ -563,6 +563,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         Map<String, String> customHeaders = new HashMap<>();
         customHeaders.put("name", "имя");
         String text = generateUserListMessage(chatId, fieldsToDisplay, customHeaders);
+        text = text + "\n Выберите действие:";
 
         // Create an inline keyboard markup for editing Users.
         InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_users", "delete_users", "edit_user");
@@ -573,12 +574,20 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     // This method allows the user to edit Notifications in the specified chat.
     // It displays a list of Notifications and provides an inline keyboard with Add, Delete, and Edit buttons.
     private void editNotifications(Long chatId) {
+        List<String> fieldsToDisplay = Arrays.asList("id", "text", "datetime", "repetition", "datetimexcluded");
+        Map<String, String> customHeaders = new HashMap<>();
+        customHeaders.put("id", "ID: ");
+        customHeaders.put("text", "Текст уведомления: ");
+        customHeaders.put("datetime", "Дата и время: ");
+        customHeaders.put("repetition", "Частота: ");
+        customHeaders.put("datetimexcluded", "Исключения: \n");
+        String text = generateNotificationListMessage(chatId, fieldsToDisplay, customHeaders);
+        text = text + "\n Выберите действие:";
 
-        showNotifications(chatId);
         // Create an inline keyboard markup for editing Notifications.
         InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_notification", "delete_notifications", "edit_notification");
         // Send the message with the inline keyboard to the chat.
-        sendMessageWithInlineKeyboard(chatId, "Выберите действие:", inlineKeyboardMarkup);
+        sendMessageWithInlineKeyboard(chatId, text, inlineKeyboardMarkup);
     }
 
     // This method allows the user to edit Chats.
@@ -697,21 +706,11 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             for (String field : fieldsToDisplay) {
                 sb.append("| ");
                 switch (field) {
-                    case "id":
-                        sb.append(user.getId());
-                        break;
-                    case "chatid":
-                        sb.append(user.getChatid());
-                        break;
-                    case "name":
-                        sb.append(user.getName());
-                        break;
-                    case "username":
-                        sb.append(user.getUsername());
-                        break;
-                    case "haswon":
-                        sb.append(user.isHaswon() ? "Yes" : "No");
-                        break;
+                    case "id" -> sb.append(user.getId());
+                    case "chatid" -> sb.append(user.getChatid());
+                    case "name" -> sb.append(user.getName());
+                    case "username" -> sb.append(user.getUsername());
+                    case "haswon" -> sb.append(user.isHaswon() ? "Yes" : "No");
                 }
                 sb.append(" ");
             }
@@ -721,12 +720,21 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         return sb.toString();
     }
 
-
     private void showNotifications(Long chatId) {
+        List<String> fieldsToDisplay = Arrays.asList("text", "datetime", "repetition", "datetimexcluded");
+        Map<String, String> customHeaders = new HashMap<>();
+        customHeaders.put("text", "Текст уведомления: ");
+        customHeaders.put("datetime", "Дата и время: ");
+        customHeaders.put("repetition", "Частота: ");
+        customHeaders.put("datetimexcluded", "Исключения: \n");
+        String text = generateNotificationListMessage(chatId, fieldsToDisplay, customHeaders);
+        sendChatMessage(chatId, text);
+    }
+
+    public String generateNotificationListMessage(Long chatId, List<String> fieldsToDisplay, Map<String, String> customHeaders) {
         List<Notification> notifications = notificationRepository.findByChatid(chatId);
         if (notifications.isEmpty()) {
-            sendChatMessage(chatId, "Уведомления для этого чата отсутствуют");
-            return;
+            return "Уведомления для этого чата отсутствуют";
         }
 
         StringBuilder sb = new StringBuilder();
@@ -738,34 +746,54 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         ZoneId timeZone = ZoneId.of("GMT+3");
 
         for (Notification notification : notifications) {
-            sb.append("ID: ").append(notification.getId()).append("\n");
-            sb.append("Текст уведомления: ").append(notification.getText()).append("\n");
-            sb.append("Дата и время: ").append(notification.getDatetime().withZoneSameInstant(timeZone).format(dateTimeFormatter)).append("\n");
-            sb.append("Частота: ").append(notification.getRepetition()).append("\n");
-
-            if (notification.getDatetimexcluded() != null) {
-                sb.append("Исключения:\n");
-
-                if (notification.getDatetimexcluded().get("weekends").asBoolean()) {
-                    sb.append("  - Исключить СБ и ВС\n");
-                }
-
-                ArrayNode skipDays = (ArrayNode) notification.getDatetimexcluded().get("skip_days");
-                if (skipDays != null) {
-                    sb.append("  - Исключить дни:\n");
-                    for (JsonNode skipDay : skipDays) {
-                        int frequency = skipDay.get("frequency").asInt();
-                        String dayStr = skipDay.get("day").asText();
-                        sb.append("    * ").append(dayStr).append(" (every ").append(frequency).append(" days)\n");
+            for (String field : fieldsToDisplay) {
+                switch (field) {
+                    case "id" -> {
+                        String customHeader = customHeaders.getOrDefault(field, field);
+                        sb.append(customHeader).append(notification.getId()).append("\n");
+                    }
+                    case "chatid" -> {
+                        String customHeader = customHeaders.getOrDefault(field, field);
+                        sb.append(customHeader).append(notification.getChatid()).append("\n");
+                    }
+                    case "text" -> {
+                        String customHeader = customHeaders.getOrDefault(field, field);
+                        sb.append(customHeader).append(notification.getText()).append("\n");
+                    }
+                    case "datetime" -> {
+                        String customHeader = customHeaders.getOrDefault(field, field);
+                        sb.append(customHeader).append(notification.getDatetime().withZoneSameInstant(timeZone).format(dateTimeFormatter)).append("\n");
+                    }
+                    case "repetition" -> {
+                        String customHeader = customHeaders.getOrDefault(field, field);
+                        sb.append(customHeader).append(notification.getRepetition()).append("\n");
+                    }
+                    case "datetimexcluded" -> {
+                        if (notification.getDatetimexcluded() != null) {
+                            String customHeader = customHeaders.getOrDefault(field, field);
+                            sb.append(customHeader);
+                            if (notification.getDatetimexcluded().get("weekends").asBoolean()) {
+                                sb.append("  - Исключить СБ и ВС\n");
+                            }
+                            ArrayNode skipDays = (ArrayNode) notification.getDatetimexcluded().get("skip_days");
+                            if (skipDays != null) {
+                                sb.append("  - Исключить дни: \n");
+                                for (JsonNode skipDay : skipDays) {
+                                    int frequency = skipDay.get("frequency").asInt();
+                                    String dayStr = skipDay.get("day").asText();
+                                    sb.append("    * ").append(dayStr).append(" (every ").append(frequency).append(" days)\n");
+                                }
+                            }
+                        }
                     }
                 }
             }
-
             sb.append("\n");
         }
 
-        sendChatMessage(chatId, sb.toString());
+        return sb.toString();
     }
+
 
     private User findWinner(Long chatId) {
         List<User> users = userRepository.findByChatid(chatId);
