@@ -453,9 +453,10 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     // This method allows the user to edit Users in the specified chat.
     // It displays a list of Users and provides an inline keyboard with Add, Delete, and Edit buttons.
     private void editUsers(Message message, Long chatId) {
-        List<String> fieldsToDisplay = Arrays.asList("id", "name", "username");
+        List<String> fieldsToDisplay = Arrays.asList("id", "name", "username", "haswon");
         Map<String, String> customHeaders = new HashMap<>();
         customHeaders.put("name", "имя");
+        customHeaders.put("haswon", "выиграл");
         String text = generateUserListMessage(chatId, fieldsToDisplay, customHeaders);
         text = text + "\n Выберите действие:";
 
