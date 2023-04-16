@@ -76,6 +76,7 @@ public class UserManagementController {
             String text = userService.generateUserListMessage(chatId, fieldsToDisplay, customHeaders);
             text = text + "\n Выберите действие:";
             InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_users", "delete_users", "edit_users");
+
             SendMessage message = new SendMessage();
             message.setChatId(chatId);
             message.setText(text);

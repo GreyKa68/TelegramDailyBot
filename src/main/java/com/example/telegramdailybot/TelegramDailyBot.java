@@ -118,10 +118,6 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             return;
         }
 
-        Optional<Chat> chatOptional = chatRepository.findById(chatId);
-        boolean isUserChat = message.getChat().isUserChat();
-        boolean isAdmin = chatOptional.isPresent() && "admin".equals(chatOptional.get().getRole());
-
         switch (command.toLowerCase()) {
             case "/start" -> handleStartCommand(chatId);
             case "/getchatid" -> handleGetChatIdCommand(chatId);
@@ -130,14 +126,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             case "/showusers" -> sendChatMessage(userManagementController.showUsers(update));
             case "/shownotifications" -> sendChatMessage(notificationManagementController.showNotifications(update));
             case "/editusers" -> sendChatMessage(userManagementController.editUsers(update, userActionStates));
-            case "/editnotifications" -> {
-                if (isUserChat && isAdmin) {
-                    sendChatMessage(chatId, "Введите ID чата для редактирования уведомлений:");
-                    userActionStates.put(chatId, UserActionState.WAITING_FOR_CHAT_ID_TO_EDIT_NOTIFICATIONS);
-                } else {
-                    editNotifications(message, chatId);
-                }
-            }
+            case "/editnotifications" ->
+                    sendChatMessage(notificationManagementController.editNotifications(update, userActionStates));
             case "/editchats" -> editChats(message, chatId);
             case "/askchatgpt3" -> askChatGPT3(message, chatId);
             default -> sendChatMessage(chatId, "Неизвестная команда!");
