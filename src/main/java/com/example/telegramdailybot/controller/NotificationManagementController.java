@@ -3,6 +3,7 @@ package com.example.telegramdailybot.controller;
 import com.example.telegramdailybot.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.Arrays;
@@ -19,13 +20,16 @@ public class NotificationManagementController {
         this.notificationService = notificationService;
     }
 
-    public String showNotifications(Update update) {
+    public SendMessage showNotifications(Update update) {
         List<String> fieldsToDisplay = Arrays.asList("text", "datetime", "repetition", "datetimexcluded");
         Map<String, String> customHeaders = new HashMap<>();
         customHeaders.put("text", "Текст уведомления: ");
         customHeaders.put("datetime", "Дата и время: ");
         customHeaders.put("repetition", "Частота: ");
         customHeaders.put("datetimexcluded", "Исключения: \n");
-        return notificationService.generateNotificationListMessage(update.getMessage().getChatId(), fieldsToDisplay, customHeaders);
+        SendMessage message = new SendMessage();
+        message.setChatId(update.getMessage().getChatId());
+        message.setText(notificationService.generateNotificationListMessage(update.getMessage().getChatId(), fieldsToDisplay, customHeaders));
+        return message;
     }
 }

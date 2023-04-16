@@ -60,7 +60,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private final NotificationManagementController notificationManagementController;
 
     @Autowired
-    public TelegramDailyBot(ChatGPT3Service chatGpt3Service, ChatEditHandler chatEditHandler, ChatDeletionHandler chatDeletionHandler, NotificationEditHandler notificationEditHandler, NotificationDeletionHandler notificationDeletionHandler, UserEditHandler userEditHandler, UserDeletionHandler userDeletionHandler,
+    public TelegramDailyBot(ChatGPT3Service chatGpt3Service,
+                            ChatEditHandler chatEditHandler,
+                            ChatDeletionHandler chatDeletionHandler,
+                            NotificationEditHandler notificationEditHandler,
+                            NotificationDeletionHandler notificationDeletionHandler,
+                            UserEditHandler userEditHandler,
+                            UserDeletionHandler userDeletionHandler,
                             TelegramDailyBotProperties properties,
                             ChatRepository chatRepository,
                             NotificationRepository notificationRepository,
@@ -119,19 +125,11 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         switch (command.toLowerCase()) {
             case "/start" -> handleStartCommand(chatId);
             case "/getchatid" -> handleGetChatIdCommand(chatId);
-            case "/next" -> sendChatMessage(chatId, userManagementController.findWinner(update));
-            case "/resetwinners" -> sendChatMessage(chatId, userManagementController.resetWinners(update));
-            case "/showusers" -> sendChatMessage(chatId, userManagementController.showUsers(update));
-            case "/shownotifications" ->
-                    sendChatMessage(chatId, notificationManagementController.showNotifications(update));
-            case "/editusers" -> {
-                if (isUserChat && isAdmin) {
-                    sendChatMessage(chatId, "Введите ID чата для редактирования пользователей:");
-                    userActionStates.put(chatId, UserActionState.WAITING_FOR_CHAT_ID_TO_EDIT_USERS);
-                } else {
-                    editUsers(message, chatId);
-                }
-            }
+            case "/next" -> sendChatMessage(userManagementController.findWinner(update));
+            case "/resetwinners" -> sendChatMessage(userManagementController.resetWinners(update));
+            case "/showusers" -> sendChatMessage(userManagementController.showUsers(update));
+            case "/shownotifications" -> sendChatMessage(notificationManagementController.showNotifications(update));
+            case "/editusers" -> sendChatMessage(userManagementController.editUsers(update, userActionStates));
             case "/editnotifications" -> {
                 if (isUserChat && isAdmin) {
                     sendChatMessage(chatId, "Введите ID чата для редактирования уведомлений:");
@@ -747,6 +745,14 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             execute(message);
         } catch (TelegramApiException e) {
             logger.error("Error sending message to chat: {}", chatId, e);
+        }
+    }
+
+    private void sendChatMessage(SendMessage message) {
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            logger.error("Error sending message to chat: {}", e);
         }
     }
 
