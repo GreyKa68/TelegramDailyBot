@@ -25,20 +25,20 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-    public List<User> findByChatId(long chatId) {
+    public List<User> findByChatid(long chatId) {
         return userRepository.findByChatid(chatId);
     }
 
     public void resetWinners(long chatId) {
-        List<User> winners = findByChatId(chatId);
+        List<User> winners = findByChatid(chatId);
         winners.forEach(user -> {
             user.setHaswon(false);
-            userRepository.save(user);
+            save(user);
         });
     }
 
     public String findWinner(Long chatId) {
-        List<User> users = userRepository.findByChatid(chatId);
+        List<User> users = findByChatid(chatId);
 
         if (users.isEmpty()) {
             return "Участники для розыгрыша в этом чате отсутствуют";
@@ -54,7 +54,7 @@ public class UserService {
         if (usersWithoutWin.isEmpty()) {
             for (User user : users) {
                 user.setHaswon(false);
-                userRepository.save(user);
+                save(user);
             }
             usersWithoutWin.addAll(users);
         }
@@ -63,13 +63,13 @@ public class UserService {
         int winnerIndex = random.nextInt(usersWithoutWin.size());
         User winner = usersWithoutWin.get(winnerIndex);
         winner.setHaswon(true);
-        userRepository.save(winner);
+        save(winner);
 
         return "Участник " + winner.getName() + ", @" + winner.getUsername() + " выиграл!";
     }
 
     public String generateUserListMessage(Long chatId, List<String> fieldsToDisplay, Map<String, String> customHeaders) {
-        List<User> users = userRepository.findByChatid(chatId);
+        List<User> users = findByChatid(chatId);
         if (users.isEmpty()) {
             return "Участники розыгрышей в этом чате отсутствуют";
         }

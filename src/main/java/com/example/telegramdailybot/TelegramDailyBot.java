@@ -2,6 +2,7 @@ package com.example.telegramdailybot;
 
 
 import com.example.telegramdailybot.config.TelegramDailyBotProperties;
+import com.example.telegramdailybot.controller.NotificationManagementController;
 import com.example.telegramdailybot.controller.UserManagementController;
 import com.example.telegramdailybot.handler.*;
 import com.example.telegramdailybot.model.*;
@@ -56,6 +57,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private final Map<Long, UserActionState> userActionStates = new HashMap<>();
 
     private final UserManagementController userManagementController;
+    private final NotificationManagementController notificationManagementController;
 
     @Autowired
     public TelegramDailyBot(ChatGPT3Service chatGpt3Service, ChatEditHandler chatEditHandler, ChatDeletionHandler chatDeletionHandler, NotificationEditHandler notificationEditHandler, NotificationDeletionHandler notificationDeletionHandler, UserEditHandler userEditHandler, UserDeletionHandler userDeletionHandler,
@@ -63,7 +65,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                             ChatRepository chatRepository,
                             NotificationRepository notificationRepository,
                             UserRepository userRepository,
-                            UserManagementController userManagementController) {
+                            UserManagementController userManagementController,
+                            NotificationManagementController notificationManagementController) {
         super(properties.getBotToken());
         this.chatGpt3Service = chatGpt3Service;
         this.chatEditHandler = chatEditHandler;
@@ -77,6 +80,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.userManagementController = userManagementController;
+        this.notificationManagementController = notificationManagementController;
     }
 
     @Override
@@ -118,7 +122,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             case "/next" -> sendChatMessage(chatId, userManagementController.findWinner(update));
             case "/resetwinners" -> sendChatMessage(chatId, userManagementController.resetWinners(update));
             case "/showusers" -> sendChatMessage(chatId, userManagementController.showUsers(update));
-            case "/shownotifications" -> showNotifications(chatId);
+            case "/shownotifications" ->
+                    sendChatMessage(chatId, notificationManagementController.showNotifications(update));
             case "/editusers" -> {
                 if (isUserChat && isAdmin) {
                     sendChatMessage(chatId, "Введите ID чата для редактирования пользователей:");

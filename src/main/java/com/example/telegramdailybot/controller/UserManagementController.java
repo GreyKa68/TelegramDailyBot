@@ -1,6 +1,5 @@
 package com.example.telegramdailybot.controller;
 
-import com.example.telegramdailybot.service.ChatService;
 import com.example.telegramdailybot.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -15,12 +14,10 @@ import java.util.Map;
 public class UserManagementController {
 
     private final UserService userService;
-    private final ChatService chatService;
 
     @Autowired
-    public UserManagementController(UserService userService, ChatService chatService) {
+    public UserManagementController(UserService userService) {
         this.userService = userService;
-        this.chatService = chatService;
     }
 
     public String addUser(Update update) {
