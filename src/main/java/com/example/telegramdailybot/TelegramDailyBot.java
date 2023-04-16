@@ -2,6 +2,7 @@ package com.example.telegramdailybot;
 
 
 import com.example.telegramdailybot.config.TelegramDailyBotProperties;
+import com.example.telegramdailybot.controller.UserManagementController;
 import com.example.telegramdailybot.handler.*;
 import com.example.telegramdailybot.model.*;
 import com.example.telegramdailybot.repository.ChatRepository;
@@ -54,12 +55,15 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private final UserRepository userRepository;
     private final Map<Long, UserActionState> userActionStates = new HashMap<>();
 
+    private final UserManagementController userManagementController;
+
     @Autowired
     public TelegramDailyBot(ChatGPT3Service chatGpt3Service, ChatEditHandler chatEditHandler, ChatDeletionHandler chatDeletionHandler, NotificationEditHandler notificationEditHandler, NotificationDeletionHandler notificationDeletionHandler, UserEditHandler userEditHandler, UserDeletionHandler userDeletionHandler,
                             TelegramDailyBotProperties properties,
                             ChatRepository chatRepository,
                             NotificationRepository notificationRepository,
-                            UserRepository userRepository) {
+                            UserRepository userRepository,
+                            UserManagementController userManagementController) {
         super(properties.getBotToken());
         this.chatGpt3Service = chatGpt3Service;
         this.chatEditHandler = chatEditHandler;
@@ -72,6 +76,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         this.chatRepository = chatRepository;
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
+        this.userManagementController = userManagementController;
     }
 
     @Override
@@ -89,13 +94,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         Long chatId = message.getChatId();
 
         if (message.isCommand()) {
-            handleCommand(message, text, chatId);
+            handleCommand(message, text, chatId, update);
         } else {
             handleNonCommandTextMessage(message, text, chatId);
         }
     }
 
-    private void handleCommand(Message message, String text, Long chatId) {
+    private void handleCommand(Message message, String text, Long chatId, Update update) {
         String command = text.split("@")[0]; // Remove the username from the command
 
         if (!chatRepository.existsById(chatId) && !"/start".equalsIgnoreCase(command) && !"/getchatid".equalsIgnoreCase(command)) {
@@ -110,9 +115,9 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         switch (command.toLowerCase()) {
             case "/start" -> handleStartCommand(chatId);
             case "/getchatid" -> handleGetChatIdCommand(chatId);
-            case "/next" -> nextWinner(chatId);
-            case "/resetwinners" -> resetWinners(chatId);
-            case "/showusers" -> showUsers(chatId);
+            case "/next" -> sendChatMessage(chatId, userManagementController.findWinner(update));
+            case "/resetwinners" -> sendChatMessage(chatId, userManagementController.resetWinners(update));
+            case "/showusers" -> sendChatMessage(chatId, userManagementController.showUsers(update));
             case "/shownotifications" -> showNotifications(chatId);
             case "/editusers" -> {
                 if (isUserChat && isAdmin) {
