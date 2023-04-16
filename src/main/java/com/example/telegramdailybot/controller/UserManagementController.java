@@ -1,10 +1,12 @@
 package com.example.telegramdailybot.controller;
 
+import com.example.telegramdailybot.model.User;
 import com.example.telegramdailybot.model.UserActionState;
 import com.example.telegramdailybot.service.ChatService;
 import com.example.telegramdailybot.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -83,6 +85,38 @@ public class UserManagementController {
             message.setReplyMarkup(inlineKeyboardMarkup);
             return message;
         }
+    }
+
+    @Transactional
+    public SendMessage addUsers(Update update, Map<Long, UserActionState> userActionStates) {
+        // Parse and add users from the message text
+        String text = update.getMessage().getText();
+        String[] lines = text.split("\\n");
+
+        for (String line : lines) {
+            String[] parts = line.split(",", 2);
+            if (parts.length == 2) {
+                String name = parts[0].trim();
+                String username = parts[1].trim().replace("@", "");
+
+                User user = new User();
+                user.setName(name);
+                user.setUsername(username);
+                user.setChatid(update.getMessage().getChatId());
+                user.setHaswon(false);
+
+                userService.save(user);
+            }
+        }
+        // Remove the user from the userAddingStates map
+        userActionStates.remove(update.getMessage().getFrom().getId());
+
+        // Send a confirmation message to the user
+        SendMessage message = new SendMessage();
+        message.setChatId(update.getMessage().getChatId());
+        message.setText("Участники успешно добавлены");
+
+        return message;
     }
 
     private InlineKeyboardMarkup createInlineKeyboardMarkup(String addCallbackData, String deleteCallbackData, String editCallbackData) {

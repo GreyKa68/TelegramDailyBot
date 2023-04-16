@@ -110,7 +110,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         if (message.isCommand()) {
             handleCommand(message, text, chatId, update);
         } else {
-            handleNonCommandTextMessage(message, text, chatId);
+            handleNonCommandTextMessage(message, text, chatId, update);
         }
     }
 
@@ -139,7 +139,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     }
 
 
-    private void handleNonCommandTextMessage(Message message, String text, Long chatId) {
+    private void handleNonCommandTextMessage(Message message, String text, Long chatId, Update update) {
         Long userId = message.getFrom().getId();
         UserActionState userActionState = userActionStates.get(userId);
 
@@ -151,7 +151,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         }
 
         switch (userActionState) {
-            case WAITING_FOR_USERS_TO_ADD -> handleUserAdding(message, text, chatId, userId);
+            case WAITING_FOR_USERS_TO_ADD ->
+                    sendChatMessage(userManagementController.addUsers(update, userActionStates));
             case WAITING_FOR_USERS_TO_DELETE -> {
                 SendMessage msg = userDeletionHandler.handleUserDeleting(userActionStates, message, text, chatId, userId);
                 sendChatMessage(chatId, msg.getText());
