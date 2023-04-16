@@ -2,6 +2,7 @@ package com.example.telegramdailybot;
 
 
 import com.example.telegramdailybot.config.TelegramDailyBotProperties;
+import com.example.telegramdailybot.controller.ChatManagementController;
 import com.example.telegramdailybot.controller.NotificationManagementController;
 import com.example.telegramdailybot.controller.UserManagementController;
 import com.example.telegramdailybot.handler.*;
@@ -58,6 +59,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
 
     private final UserManagementController userManagementController;
     private final NotificationManagementController notificationManagementController;
+    private final ChatManagementController chatManagementController;
 
     @Autowired
     public TelegramDailyBot(ChatGPT3Service chatGpt3Service,
@@ -72,7 +74,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                             NotificationRepository notificationRepository,
                             UserRepository userRepository,
                             UserManagementController userManagementController,
-                            NotificationManagementController notificationManagementController) {
+                            NotificationManagementController notificationManagementController,
+                            ChatManagementController chatManagementController) {
         super(properties.getBotToken());
         this.chatGpt3Service = chatGpt3Service;
         this.chatEditHandler = chatEditHandler;
@@ -87,6 +90,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         this.userRepository = userRepository;
         this.userManagementController = userManagementController;
         this.notificationManagementController = notificationManagementController;
+        this.chatManagementController = chatManagementController;
     }
 
     @Override
@@ -128,7 +132,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             case "/editusers" -> sendChatMessage(userManagementController.editUsers(update, userActionStates));
             case "/editnotifications" ->
                     sendChatMessage(notificationManagementController.editNotifications(update, userActionStates));
-            case "/editchats" -> editChats(message, chatId);
+            case "/editchats" -> sendChatMessage(chatManagementController.editChats(update));
             case "/askchatgpt3" -> askChatGPT3(message, chatId);
             default -> sendChatMessage(chatId, "Неизвестная команда!");
         }

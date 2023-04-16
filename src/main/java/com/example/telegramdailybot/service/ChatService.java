@@ -33,4 +33,14 @@ public class ChatService {
         Optional<Chat> chatOptional = findById(chatId);
         return chatOptional.isPresent() && "admin".equals(chatOptional.get().getRole());
     }
+
+    public String generateChatList() {
+        List<Chat> chats = findAll();
+        StringBuilder sb = new StringBuilder("Список чатов:\n\n");
+        for (Chat chat : chats) {
+            sb.append(chat.getTelegramchatid()).append(", ")
+                    .append(chat.getName()).append(", ").append(chat.getRole()).append('\n');
+        }
+        return sb.toString();
+    }
 }
