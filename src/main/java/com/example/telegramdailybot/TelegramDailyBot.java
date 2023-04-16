@@ -1,6 +1,7 @@
 package com.example.telegramdailybot;
 
 
+import com.example.telegramdailybot.config.TelegramDailyBotProperties;
 import com.example.telegramdailybot.handler.*;
 import com.example.telegramdailybot.model.*;
 import com.example.telegramdailybot.repository.ChatRepository;
