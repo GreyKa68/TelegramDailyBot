@@ -21,6 +21,10 @@ public class ChatService {
         return chatRepository.save(chat);
     }
 
+    public void delete(Chat chat) {
+        chatRepository.delete(chat);
+    }
+
     public Optional<Chat> findById(long chatId) {
         return chatRepository.findById(chatId);
     }
@@ -47,6 +51,15 @@ public class ChatService {
 
                 save(chat);
             }
+        }
+    }
+
+    public void deleteChatsFromText(String text) {
+        String[] lines = text.split("\\n");
+
+        for (String line : lines) {
+            findById(Long.parseLong(line)).ifPresent(this::delete
+            );
         }
     }
 

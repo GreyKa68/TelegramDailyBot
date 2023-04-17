@@ -165,10 +165,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                     sendChatMessage(notificationManagementController.editNotification(update, userActionStates));
             case WAITING_FOR_CHATS_TO_ADD ->
                     sendChatMessage(chatManagementController.addChats(update, userActionStates));
-            case WAITING_FOR_CHATS_TO_DELETE -> {
-                SendMessage msg = chatDeletionHandler.handleChatDeleting(userActionStates, message, text, chatId, userId);
-                sendChatMessage(chatId, msg.getText());
-            }
+            case WAITING_FOR_CHATS_TO_DELETE ->
+                    sendChatMessage(chatManagementController.deleteChats(update, userActionStates));
             case WAITING_FOR_CHATS_TO_EDIT -> {
                 SendMessage msg = chatEditHandler.handleChatEditing(userActionStates, message, text, chatId, userId);
                 sendChatMessage(chatId, msg.getText());
