@@ -77,4 +77,19 @@ public class ChatManagementController {
         return message;
     }
 
+    public SendMessage editChats(Update update, Map<Long, UserActionState> userActionStates) {
+        String text = update.getMessage().getText();
+        chatService.editChatsFromText(text);
+
+        // Remove the user from the userAddingStates map
+        userActionStates.remove(update.getMessage().getFrom().getId());
+
+        // Send a confirmation message to the user
+        SendMessage message = new SendMessage();
+        message.setChatId(update.getMessage().getChatId());
+        message.setText("Чаты успешно отредактированы");
+
+        return message;
+    }
+
 }

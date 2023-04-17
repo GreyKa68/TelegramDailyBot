@@ -167,10 +167,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                     sendChatMessage(chatManagementController.addChats(update, userActionStates));
             case WAITING_FOR_CHATS_TO_DELETE ->
                     sendChatMessage(chatManagementController.deleteChats(update, userActionStates));
-            case WAITING_FOR_CHATS_TO_EDIT -> {
-                SendMessage msg = chatEditHandler.handleChatEditing(userActionStates, message, text, chatId, userId);
-                sendChatMessage(chatId, msg.getText());
-            }
+            case WAITING_FOR_CHATS_TO_EDIT ->
+                    sendChatMessage(chatManagementController.editChats(update, userActionStates));
             case WAITING_FOR_CHATGPT3_QUERY -> {
                 sendChatMessage(chatId, "Подождите, пожалуйста, ChatGPT пишет ответ...");
                 // Remove the user from the userAddingStates map

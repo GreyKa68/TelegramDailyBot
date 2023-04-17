@@ -63,6 +63,27 @@ public class ChatService {
         }
     }
 
+    public void editChatsFromText(String text) {
+        String[] lines = text.split("\\n");
+
+        for (String line : lines) {
+            String[] parts = line.split(",", 3);
+            if (parts.length == 3) {
+                Long telegramid = Long.parseLong(parts[0].trim());
+                String name = parts[1].trim();
+                String role = parts[2].trim();
+
+                Chat chat = findById(telegramid).orElse(null);
+
+                if (chat != null) {
+                    chat.setName(name);
+                    chat.setRole(role);
+                    save(chat);
+                }
+            }
+        }
+    }
+
     public boolean isAdmin(long chatId) {
         Optional<Chat> chatOptional = findById(chatId);
         return chatOptional.isPresent() && "admin".equals(chatOptional.get().getRole());
