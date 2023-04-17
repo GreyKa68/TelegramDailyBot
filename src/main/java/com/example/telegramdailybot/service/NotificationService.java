@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -31,6 +32,7 @@ public class NotificationService {
         this.chatService = chatService;
     }
 
+    @Transactional
     public String addNotificationFromText(String text, long chatId) {
         // Parse the notification from the message text
         ParseResult parseResult = BotUtils.parseNotificationText(text, telegramDailyBotProperties.getTimeZone());
@@ -48,6 +50,7 @@ public class NotificationService {
         return "Уведомление успешно добавлено";
     }
 
+    @Transactional
     public void deleteNotificationsFromText(String text, long chatId, long userId) {
         String[] lines = text.split("\\n");
 
@@ -61,6 +64,7 @@ public class NotificationService {
         }
     }
 
+    @Transactional
     public String editNotificationFromText(String text, long chatId, long userId) {
         // Extract the ID from the text
         String regex = "ID:\\s*(\\d+)";

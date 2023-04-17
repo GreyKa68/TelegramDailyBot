@@ -176,15 +176,9 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                 chatGpt3Service.chat(text).thenAcceptAsync(responseText -> sendChatMessage(chatId, responseText));
             }
             case WAITING_FOR_CHAT_ID_TO_EDIT_USERS ->
-                    sendChatMessage(userManagementController.editUsersAdmin(update, userActionStates));
+                    sendChatMessage(userManagementController.editUsersByAdmin(update, userActionStates));
             case WAITING_FOR_CHAT_ID_TO_EDIT_NOTIFICATIONS -> {
-                try {
-                    Long targetChatId = Long.parseLong(text);
-                    userActionStates.remove(userId);
-                    editNotifications(message, targetChatId);
-                } catch (NumberFormatException e) {
-                    sendChatMessage(chatId, "Неверный формат ID чата. Введите корректный ID чата:");
-                }
+                sendChatMessage(notificationManagementController.editNotificationsByAdmin(update, userActionStates));
             }
         }
     }

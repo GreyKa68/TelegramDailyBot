@@ -5,6 +5,7 @@ import com.example.telegramdailybot.service.ChatService;
 import com.example.telegramdailybot.util.BotUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
@@ -47,6 +48,7 @@ public class ChatManagementController {
         }
     }
 
+    @Transactional
     public SendMessage addChats(Update update, Map<Long, UserActionState> userActionStates) {
         String text = update.getMessage().getText();
         chatService.addChatsFromText(text);
@@ -62,6 +64,7 @@ public class ChatManagementController {
         return message;
     }
 
+    @Transactional
     public SendMessage deleteChats(Update update, Map<Long, UserActionState> userActionStates) {
         String text = update.getMessage().getText();
         chatService.deleteChatsFromText(text);
@@ -77,6 +80,7 @@ public class ChatManagementController {
         return message;
     }
 
+    @Transactional
     public SendMessage editChats(Update update, Map<Long, UserActionState> userActionStates) {
         String text = update.getMessage().getText();
         chatService.editChatsFromText(text);

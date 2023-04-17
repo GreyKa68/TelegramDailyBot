@@ -143,7 +143,7 @@ public class UserManagementController {
         return message;
     }
 
-    public SendMessage editUsersAdmin(Update update, Map<Long, UserActionState> userActionStates) {
+    public SendMessage editUsersByAdmin(Update update, Map<Long, UserActionState> userActionStates) {
         long chatId = update.getMessage().getChatId();
         long userId = update.getMessage().getFrom().getId();
 

@@ -4,6 +4,7 @@ import com.example.telegramdailybot.model.User;
 import com.example.telegramdailybot.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -24,6 +25,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public void addUsersFromText(String text, long chatId) {
         String[] lines = text.split("\\n");
 
@@ -44,6 +46,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public void deleteUsersFromText(String text, long chatId, long userId) {
         String[] lines = text.split("\\n");
 
@@ -57,6 +60,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public void editUsersFromText(String text, long chatId, long userId) {
         String[] lines = text.split("\\n");
 

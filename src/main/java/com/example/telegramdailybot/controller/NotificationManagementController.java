@@ -116,4 +116,37 @@ public class NotificationManagementController {
         return message;
     }
 
+    public SendMessage editNotificationsByAdmin(Update update, Map<Long, UserActionState> userActionStates) {
+        long chatId = update.getMessage().getChatId();
+        long userId = update.getMessage().getFrom().getId();
+
+        try {
+            Long targetChatId = Long.parseLong(update.getMessage().getText());
+            userActionStates.remove(userId);
+
+            List<String> fieldsToDisplay = Arrays.asList("id", "text", "datetime", "repetition", "datetimexcluded");
+            Map<String, String> customHeaders = new HashMap<>();
+            customHeaders.put("id", "ID: ");
+            customHeaders.put("text", "Текст уведомления: ");
+            customHeaders.put("datetime", "Дата и время: ");
+            customHeaders.put("repetition", "Частота: ");
+            customHeaders.put("datetimexcluded", "Исключения: \n");
+            String text = notificationService.generateNotificationListMessage(targetChatId, fieldsToDisplay, customHeaders);
+            text = text + "\n Выберите действие:";
+
+            // Create an inline keyboard markup for editing Notifications.
+            InlineKeyboardMarkup inlineKeyboardMarkup = BotUtils.createInlineKeyboardMarkup("add_notification", "delete_notifications", "edit_notification");
+
+            SendMessage message = new SendMessage();
+            message.setChatId(chatId);
+            message.setText(text);
+            message.setReplyMarkup(inlineKeyboardMarkup);
+            return message;
+        } catch (NumberFormatException e) {
+            SendMessage message = new SendMessage();
+            message.setChatId(chatId);
+            message.setText("Неверный формат ID чата. Введите корректный ID чата:");
+            return message;
+        }
+    }
 }
