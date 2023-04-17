@@ -143,5 +143,35 @@ public class UserManagementController {
         return message;
     }
 
+    public SendMessage editUsersAdmin(Update update, Map<Long, UserActionState> userActionStates) {
+        long chatId = update.getMessage().getChatId();
+        long userId = update.getMessage().getFrom().getId();
+
+        try {
+            Long targetChatId = Long.parseLong(update.getMessage().getText());
+            userActionStates.remove(userId);
+
+            List<String> fieldsToDisplay = Arrays.asList("id", "name", "username", "haswon");
+            Map<String, String> customHeaders = new HashMap<>();
+            customHeaders.put("name", "имя");
+            customHeaders.put("haswon", "выиграл");
+            String text = userService.generateUserListMessage(targetChatId, fieldsToDisplay, customHeaders);
+            text = text + "\n Выберите действие:";
+            InlineKeyboardMarkup inlineKeyboardMarkup = BotUtils.createInlineKeyboardMarkup("add_users", "delete_users", "edit_users");
+
+            SendMessage message = new SendMessage();
+            message.setChatId(chatId);
+            message.setText(text);
+            message.setReplyMarkup(inlineKeyboardMarkup);
+            return message;
+
+        } catch (NumberFormatException e) {
+            SendMessage message = new SendMessage();
+            message.setChatId(chatId);
+            message.setText("Неверный формат ID чата. Введите корректный ID чата:");
+            return message;
+        }
+    }
+
 }
 
