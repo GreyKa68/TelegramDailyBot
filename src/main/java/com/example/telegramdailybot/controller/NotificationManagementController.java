@@ -85,4 +85,35 @@ public class NotificationManagementController {
         return message;
     }
 
+    public SendMessage deleteNotifications(Update update, Map<Long, UserActionState> userActionStates) {
+        String text = update.getMessage().getText();
+        long chatId = update.getMessage().getChatId();
+        long userId = update.getMessage().getFrom().getId();
+
+        notificationService.deleteNotificationsFromText(text, chatId, userId);
+
+        // Remove the user from the userAddingStates map
+        userActionStates.remove(userId);
+
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText("Уведомления успешно удалены");
+        return message;
+    }
+
+    public SendMessage editNotification(Update update, Map<Long, UserActionState> userActionStates) {
+        long chatId = update.getMessage().getChatId();
+        long userId = update.getMessage().getFrom().getId();
+
+        String text = notificationService.editNotificationFromText(update.getMessage().getText(), chatId, userId);
+
+        // Remove the user from the userAddingStates map
+        userActionStates.remove(userId);
+
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(text);
+        return message;
+    }
+
 }

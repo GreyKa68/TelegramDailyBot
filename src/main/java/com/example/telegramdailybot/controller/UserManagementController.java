@@ -138,7 +138,7 @@ public class UserManagementController {
         // Send a confirmation message to the user
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
-        message.setText("Участники успешно удалены");
+        message.setText("Участники успешно отредактированы");
 
         return message;
     }
