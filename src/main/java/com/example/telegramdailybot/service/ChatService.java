@@ -73,7 +73,7 @@ public class ChatService {
         for (String line : lines) {
             String[] parts = line.split(",", 3);
             if (parts.length == 3) {
-                Long telegramid = Long.parseLong(parts[0].trim());
+                long telegramid = Long.parseLong(parts[0].trim());
                 String name = parts[1].trim();
                 String role = parts[2].trim();
 
@@ -101,5 +101,9 @@ public class ChatService {
                     .append(chat.getName()).append(", ").append(chat.getRole()).append('\n');
         }
         return sb.toString();
+    }
+
+    public boolean existsById(long chatId) {
+        return chatRepository.existsById(chatId);
     }
 }

@@ -1,5 +1,6 @@
 package com.example.telegramdailybot.controller;
 
+import com.example.telegramdailybot.model.User;
 import com.example.telegramdailybot.model.UserActionState;
 import com.example.telegramdailybot.service.ChatService;
 import com.example.telegramdailybot.service.UserService;
@@ -47,12 +48,25 @@ public class UserManagementController {
         return message;
     }
 
-    public SendMessage findWinner(Update update) {
+    public SendMessage nextWinner(Update update) {
+
+        User winner = findWinner(update.getMessage().getChatId());
+        String text;
+
+        if (winner != null) {
+            text = "Участник " + winner.getName() + ", @" + winner.getUsername() + " выиграл!";
+        } else text = "Участники для розыгрыша в этом чате отсутствуют";
+
         SendMessage message = new SendMessage();
         message.setChatId(update.getMessage().getChatId());
-        message.setText(userService.findWinner(update.getMessage().getChatId()));
+        message.setText(text);
         return message;
     }
+
+    public User findWinner(Long chatId) {
+        return userService.findWinner(chatId);
+    }
+
 
     public SendMessage editUsersMessage(Update update, Map<Long, UserActionState> userActionStates) {
         long chatId = update.getMessage().getChatId();
@@ -168,7 +182,7 @@ public class UserManagementController {
         // Parse and add users from the message text
         String[] parts = update.getMessage().getText().split("\n", 2);
         try {
-            Long targetChatId = Long.parseLong(parts[0]);
+            long targetChatId = Long.parseLong(parts[0]);
             String text = parts[1];
 
             userService.addUsersFromText(text, targetChatId);

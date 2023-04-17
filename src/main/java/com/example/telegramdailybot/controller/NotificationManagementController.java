@@ -1,5 +1,6 @@
 package com.example.telegramdailybot.controller;
 
+import com.example.telegramdailybot.model.Notification;
 import com.example.telegramdailybot.model.UserActionState;
 import com.example.telegramdailybot.service.ChatService;
 import com.example.telegramdailybot.service.NotificationService;
@@ -153,8 +154,7 @@ public class NotificationManagementController {
     public SendMessage addNotificationByAdmin(Update update, Map<Long, UserActionState> userActionStates) {
         String[] parts = update.getMessage().getText().split("\n", 2);
         try {
-            Long targetChatId = Long.parseLong(parts[0]);
-            String text = parts[1];
+            long targetChatId = Long.parseLong(parts[0]);
 
             String textMessage = notificationService.addNotificationFromText(parts[1], targetChatId);
 
@@ -251,5 +251,17 @@ public class NotificationManagementController {
         message.setChatId(update.getMessage().getChatId());
         message.setText(text);
         return message;
+    }
+
+    public Notification save(Notification notification) {
+        return notificationService.save(notification);
+    }
+
+    public List<Notification> findAll() {
+        return notificationService.findAll();
+    }
+
+    public void delete(Notification notification) {
+        notificationService.delete(notification);
     }
 }

@@ -5,13 +5,11 @@ import com.example.telegramdailybot.config.TelegramDailyBotProperties;
 import com.example.telegramdailybot.controller.ChatManagementController;
 import com.example.telegramdailybot.controller.NotificationManagementController;
 import com.example.telegramdailybot.controller.UserManagementController;
-import com.example.telegramdailybot.handler.*;
-import com.example.telegramdailybot.model.*;
-import com.example.telegramdailybot.repository.ChatRepository;
-import com.example.telegramdailybot.repository.NotificationRepository;
-import com.example.telegramdailybot.repository.UserRepository;
+import com.example.telegramdailybot.model.Chat;
+import com.example.telegramdailybot.model.Notification;
+import com.example.telegramdailybot.model.User;
+import com.example.telegramdailybot.model.UserActionState;
 import com.example.telegramdailybot.service.ChatGPT3Service;
-import com.example.telegramdailybot.util.BotUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,15 +18,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.time.LocalDate;
@@ -37,7 +32,10 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 
 @Component
@@ -45,16 +43,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
 
     private static final Logger logger = LoggerFactory.getLogger(TelegramDailyBot.class);
     private final ChatGPT3Service chatGpt3Service;
-    private final ChatDeletionHandler chatDeletionHandler;
-    private final ChatEditHandler chatEditHandler;
-    private final UserDeletionHandler userDeletionHandler;
-    private final UserEditHandler userEditHandler;
-    private final NotificationDeletionHandler notificationDeletionHandler;
-    private final NotificationEditHandler notificationEditHandler;
     private final TelegramDailyBotProperties properties;
-    private final ChatRepository chatRepository;
-    private final NotificationRepository notificationRepository;
-    private final UserRepository userRepository;
+
     private final Map<Long, UserActionState> userActionStates = new HashMap<>();
 
     private final UserManagementController userManagementController;
@@ -63,31 +53,13 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
 
     @Autowired
     public TelegramDailyBot(ChatGPT3Service chatGpt3Service,
-                            ChatEditHandler chatEditHandler,
-                            ChatDeletionHandler chatDeletionHandler,
-                            NotificationEditHandler notificationEditHandler,
-                            NotificationDeletionHandler notificationDeletionHandler,
-                            UserEditHandler userEditHandler,
-                            UserDeletionHandler userDeletionHandler,
                             TelegramDailyBotProperties properties,
-                            ChatRepository chatRepository,
-                            NotificationRepository notificationRepository,
-                            UserRepository userRepository,
                             UserManagementController userManagementController,
                             NotificationManagementController notificationManagementController,
                             ChatManagementController chatManagementController) {
         super(properties.getBotToken());
         this.chatGpt3Service = chatGpt3Service;
-        this.chatEditHandler = chatEditHandler;
-        this.chatDeletionHandler = chatDeletionHandler;
-        this.notificationEditHandler = notificationEditHandler;
-        this.notificationDeletionHandler = notificationDeletionHandler;
-        this.userEditHandler = userEditHandler;
-        this.userDeletionHandler = userDeletionHandler;
         this.properties = properties;
-        this.chatRepository = chatRepository;
-        this.notificationRepository = notificationRepository;
-        this.userRepository = userRepository;
         this.userManagementController = userManagementController;
         this.notificationManagementController = notificationManagementController;
         this.chatManagementController = chatManagementController;
@@ -103,21 +75,18 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     }
 
     private void handleMessageWithText(Update update) {
-        Message message = update.getMessage();
-        String text = message.getText();
-        Long chatId = message.getChatId();
-
-        if (message.isCommand()) {
-            handleCommand(message, text, chatId, update);
+        if (update.getMessage().isCommand()) {
+            handleCommand(update);
         } else {
-            handleNonCommandTextMessage(message, text, chatId, update);
+            handleNonCommandTextMessage(update);
         }
     }
 
-    private void handleCommand(Message message, String text, Long chatId, Update update) {
-        String command = text.split("@")[0]; // Remove the username from the command
+    private void handleCommand(Update update) {
+        String command = update.getMessage().getText().split("@")[0]; // Remove the username from the command
+        Long chatId = update.getMessage().getChatId();
 
-        if (!chatRepository.existsById(chatId) && !"/start".equalsIgnoreCase(command) && !"/getchatid".equalsIgnoreCase(command)) {
+        if (!chatManagementController.existsById(chatId) && !"/start".equalsIgnoreCase(command) && !"/getchatid".equalsIgnoreCase(command)) {
             sendChatMessage(chatId, "Вы не зарегистрированы в боте!");
             return;
         }
@@ -125,7 +94,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         switch (command.toLowerCase()) {
             case "/start" -> handleStartCommand(chatId);
             case "/getchatid" -> handleGetChatIdCommand(chatId);
-            case "/next" -> sendChatMessage(userManagementController.findWinner(update));
+            case "/next" -> sendChatMessage(userManagementController.nextWinner(update));
             case "/resetwinners" -> sendChatMessage(userManagementController.resetWinners(update));
             case "/showusers" -> sendChatMessage(userManagementController.showUsers(update));
             case "/shownotifications" -> sendChatMessage(notificationManagementController.showNotifications(update));
@@ -133,14 +102,16 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             case "/editnotifications" ->
                     sendChatMessage(notificationManagementController.editNotificationsMessage(update, userActionStates));
             case "/editchats" -> sendChatMessage(chatManagementController.editChatsMessage(update));
-            case "/askchatgpt3" -> askChatGPT3(message, chatId);
+            case "/askchatgpt3" -> askChatGPT3(update.getMessage(), chatId);
             default -> sendChatMessage(chatId, "Неизвестная команда!");
         }
     }
 
 
-    private void handleNonCommandTextMessage(Message message, String text, Long chatId, Update update) {
-        Long userId = message.getFrom().getId();
+    private void handleNonCommandTextMessage(Update update) {
+        Long userId = update.getMessage().getFrom().getId();
+        Long chatId = update.getMessage().getChatId();
+        String text = update.getMessage().getText();
         UserActionState userActionState = userActionStates.get(userId);
 
         if (userActionState == null) {
@@ -191,18 +162,24 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         String data = callbackQuery.getData();
 
         switch (data) {
-            case "add_users" -> userManagementController.initiateAddUsersProcess(update, userActionStates);
-            case "delete_users" -> userManagementController.initiateDeleteUsersProcess(update, userActionStates);
-            case "edit_users" -> userManagementController.initiateEditUsersProcess(update, userActionStates);
+            case "add_users" ->
+                    sendChatMessage(userManagementController.initiateAddUsersProcess(update, userActionStates));
+            case "delete_users" ->
+                    sendChatMessage(userManagementController.initiateDeleteUsersProcess(update, userActionStates));
+            case "edit_users" ->
+                    sendChatMessage(userManagementController.initiateEditUsersProcess(update, userActionStates));
             case "add_notification" ->
-                    notificationManagementController.initiateAddNotificationProcess(update, userActionStates);
+                    sendChatMessage(notificationManagementController.initiateAddNotificationProcess(update, userActionStates));
             case "delete_notifications" ->
-                    notificationManagementController.initiateDeleteNotificationsProcess(update, userActionStates);
+                    sendChatMessage(notificationManagementController.initiateDeleteNotificationsProcess(update, userActionStates));
             case "edit_notification" ->
-                    notificationManagementController.initiateEditNotificationProcess(update, userActionStates);
-            case "add_chats" -> chatManagementController.initiateAddChatsProcess(update, userActionStates);
-            case "delete_chats" -> chatManagementController.initiateDeleteChatsProcess(update, userActionStates);
-            case "edit_chats" -> chatManagementController.initiateEditChatsProcess(update, userActionStates);
+                    sendChatMessage(notificationManagementController.initiateEditNotificationProcess(update, userActionStates));
+            case "add_chats" ->
+                    sendChatMessage(chatManagementController.initiateAddChatsProcess(update, userActionStates));
+            case "delete_chats" ->
+                    sendChatMessage(chatManagementController.initiateDeleteChatsProcess(update, userActionStates));
+            case "edit_chats" ->
+                    sendChatMessage(chatManagementController.initiateEditChatsProcess(update, userActionStates));
         }
 
         // Acknowledge the callback query
@@ -244,473 +221,6 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         sendChatMessage(chatId, "Напишите свой вопрос ChatGPT3");
     }
 
-    private void initiateAddUsersProcess(Long userId, Long chatId) {
-        userActionStates.put(userId, UserActionState.WAITING_FOR_USERS_TO_ADD);
-        String text = """
-                Пожалуйста, вышлите через запятую: имя, @username. Например:
-
-                Вася,@vasyatelegram
-                Петя,@evilusername
-                Эвелина,@evacool""";
-        sendChatMessage(chatId, text);
-    }
-
-    private void initiateAddChatsProcess(Long userId, Long chatId) {
-        userActionStates.put(userId, UserActionState.WAITING_FOR_CHATS_TO_ADD);
-        String text = """
-                Пожалуйста, вышлите через запятую: ID, название чата, роль. Например:
-
-                12345678, Чат команды1, admin
-                12345678, Чат команды2, user
-                12345678, Иван Иванов, admin""";
-        sendChatMessage(chatId, text);
-    }
-
-    private void initiateAddNotificationProcess(Long userId, Long chatId) {
-        userActionStates.put(userId, UserActionState.WAITING_FOR_NOTIFICATION_TO_ADD);
-
-        String text = """
-                Пожалуйста, пришлите уведомление согласно следующему шаблону. Для удобства шаблон можно скопировать, вставить и отредактировать
-
-                Текст уведомления: Все на дейли, сегодня шарит @name, @username!
-                Дата и время: 2023-04-06T14:00
-                Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}
-                Исключения:
-                  - Исключить СБ и ВС
-                  - Исключить дни:
-                    * 2023-04-12 (every 7 days)
-                    * 2023-04-24 (every 21 days)
-                    * 2023-04-07 (every 7 days)""";
-        sendChatMessage(chatId, text);
-    }
-
-    private void initiateDeleteUsersProcess(Long userId, Long chatId) {
-        userActionStates.put(userId, UserActionState.WAITING_FOR_USERS_TO_DELETE);
-        String text = """
-                Пожалуйста, вышлите ID участников, которых вы хотите удалить, каждый ID с новой строчки. Например:
-
-                10
-                11
-                12""";
-        sendChatMessage(chatId, text);
-    }
-
-    private void initiateDeleteChatsProcess(Long userId, Long chatId) {
-        userActionStates.put(userId, UserActionState.WAITING_FOR_CHATS_TO_DELETE);
-        String text = """
-                Пожалуйста, вышлите ID чатов, которых вы хотите удалить, каждый ID с новой строчки. Например:
-
-                10
-                11
-                12""";
-        sendChatMessage(chatId, text);
-    }
-
-    private void initiateDeleteNotificationsProcess(Long userId, Long chatId) {
-        userActionStates.put(userId, UserActionState.WAITING_FOR_NOTIFICATION_TO_DELETE);
-        String text = """
-                Пожалуйста, вышлите ID уведомлений, которые вы хотите удалить, каждый ID с новой строчки. Например:
-
-                10
-                11
-                12""";
-        sendChatMessage(chatId, text);
-    }
-
-    private void initiateEditUsersProcess(Long userId, Long chatId) {
-        userActionStates.put(userId, UserActionState.WAITING_FOR_USERS_TO_EDIT);
-        String text = """
-                Пожалуйста, вышлите через запятую: ID участника, которого вы хотите изменить, имя, username. Например:
-
-                10,Вася,vasyatelegram
-                11,Петя,evilusername
-                12,Эвелина,evacool""";
-        sendChatMessage(chatId, text);
-    }
-
-    private void initiateEditChatsProcess(Long userId, Long chatId) {
-        userActionStates.put(userId, UserActionState.WAITING_FOR_CHATS_TO_EDIT);
-        String text = """
-                Пожалуйста, вышлите через запятую: ID чата, который вы хотите изменить, название, роль. Например:
-
-                10,Scrum команда1,
-                11,Петя,admin
-                12,Scrum команда2,""";
-        sendChatMessage(chatId, text);
-    }
-
-    private void initiateEditNotificationProcess(Long userId, Long chatId) {
-        userActionStates.put(userId, UserActionState.WAITING_FOR_NOTIFICATION_TO_EDIT);
-
-        String text = """
-                Пожалуйста, пришлите измененное уведомление согласно следующему шаблону. Для удобства скопируйте предыдущую версию уведомления и измените ее
-                                
-                ID: 11
-                Текст уведомления: Все на дейли, сегодня шарит @name, @username!
-                Дата и время: 2023-04-06T14:00
-                Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}
-                Исключения:
-                  - Исключить СБ и ВС
-                  - Исключить дни:
-                    * 2023-04-12 (every 7 days)
-                    * 2023-04-24 (every 21 days)
-                    * 2023-04-07 (every 7 days)""";
-        sendChatMessage(chatId, text);
-    }
-
-    @Transactional
-    private void handleUserAdding(Message message, String text, Long chatId, Long userId) {
-        // Parse and add users from the message text
-        String[] lines = text.split("\\n");
-
-        for (String line : lines) {
-            String[] parts = line.split(",", 2);
-            if (parts.length == 2) {
-                String name = parts[0].trim();
-                String username = parts[1].trim().replace("@", "");
-
-                User user = new User();
-                user.setName(name);
-                user.setUsername(username);
-                user.setChatid(chatId);
-                user.setHaswon(false);
-
-                userRepository.save(user);
-            }
-        }
-        // Remove the user from the userAddingStates map
-        userActionStates.remove(userId);
-
-        // Send a confirmation message to the user
-        sendChatMessage(chatId, "Участники успешно добавлены");
-    }
-
-    @Transactional
-    private void handleChatsAdding(Message message, String text, Long chatId, Long userId) {
-        // Parse and add chats from the message text
-        String[] lines = text.split("\\n");
-
-        for (String line : lines) {
-            String[] parts = line.split(",", 3);
-            if (parts.length == 3) {
-                Long telegramchatid = Long.parseLong(parts[0].trim());
-                String name = parts[1].trim();
-                String role = parts[2].trim();
-
-                Chat chat = new Chat();
-                chat.setTelegramchatid(telegramchatid);
-                chat.setName(name);
-                chat.setRole(role);
-
-                chatRepository.save(chat);
-            }
-        }
-        // Remove the user from the userAddingStates map
-        userActionStates.remove(userId);
-
-        // Send a confirmation message to the user
-        sendChatMessage(chatId, "Чаты успешно добавлены");
-    }
-
-    @Transactional
-    private void handleNotificationAdding(Message message, String text, Long chatId, Long userId) {
-        // Parse the notification from the message text
-        ParseResult parseResult = BotUtils.parseNotificationText(text, properties.getTimeZone());
-        if (parseResult.hasError()) {
-            // Send an error message if the text could not be parsed
-            sendChatMessage(chatId, "Ошибка при добавлении уведомления. " + parseResult.getErrorMessage());
-            return;
-        }
-        Notification notification = parseResult.getNotification();
-        // Set the chat ID
-        notification.setChatid(chatId);
-
-        // Save the notification
-        notificationRepository.save(notification);
-
-        // Remove the user from the userAddingStates map
-        userActionStates.remove(userId);
-
-        // Send a confirmation message to the user
-        sendChatMessage(chatId, "Уведомление успешно добавлено");
-    }
-
-    // This method allows the user to edit Users in the specified chat.
-    // It displays a list of Users and provides an inline keyboard with Add, Delete, and Edit buttons.
-    private void editUsers(Message message, Long chatId) {
-        List<String> fieldsToDisplay = Arrays.asList("id", "name", "username", "haswon");
-        Map<String, String> customHeaders = new HashMap<>();
-        customHeaders.put("name", "имя");
-        customHeaders.put("haswon", "выиграл");
-        String text = generateUserListMessage(chatId, fieldsToDisplay, customHeaders);
-        text = text + "\n Выберите действие:";
-
-        // Create an inline keyboard markup for editing Users.
-        InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_users", "delete_users", "edit_users");
-        // Send the message with the inline keyboard to the chat.
-        sendMessageWithInlineKeyboard(message.getChatId(), text, inlineKeyboardMarkup);
-    }
-
-    // This method allows the user to edit Notifications in the specified chat.
-    // It displays a list of Notifications and provides an inline keyboard with Add, Delete, and Edit buttons.
-    private void editNotifications(Message message, Long chatId) {
-        List<String> fieldsToDisplay = Arrays.asList("id", "text", "datetime", "repetition", "datetimexcluded");
-        Map<String, String> customHeaders = new HashMap<>();
-        customHeaders.put("id", "ID: ");
-        customHeaders.put("text", "Текст уведомления: ");
-        customHeaders.put("datetime", "Дата и время: ");
-        customHeaders.put("repetition", "Частота: ");
-        customHeaders.put("datetimexcluded", "Исключения: \n");
-        String text = generateNotificationListMessage(chatId, fieldsToDisplay, customHeaders);
-        text = text + "\n Выберите действие:";
-
-        // Create an inline keyboard markup for editing Notifications.
-        InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_notification", "delete_notifications", "edit_notification");
-        // Send the message with the inline keyboard to the chat.
-        sendMessageWithInlineKeyboard(message.getChatId(), text, inlineKeyboardMarkup);
-    }
-
-    // This method allows the user to edit Chats.
-    // It displays a list of Chats and provides an inline keyboard with Add, Delete, and Edit buttons.
-    // The user must be an admin and in a private chat to edit Chats.
-    private void editChats(Message message, Long chatId) {
-        // Check if the chat is private
-        if (message.getChat().isUserChat()) {
-            Optional<Chat> optionalChat = chatRepository.findById(chatId);
-            if (optionalChat.isPresent()) {
-                Chat chatTemp = optionalChat.get();
-
-                // Check if the user has 'admin' role
-                if ("admin".equalsIgnoreCase(chatTemp.getRole())) {
-                    List<Chat> chatList = chatRepository.findAll();
-                    StringBuilder sb = new StringBuilder("Список чатов:\n\n");
-                    for (Chat chat : chatList) {
-                        sb.append(chat.getTelegramchatid()).append(", ")
-                                .append(chat.getName()).append(", ").append(chat.getRole()).append('\n');
-                    }
-
-                    // Create an inline keyboard markup for editing Chats.
-                    InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_chats", "delete_chats", "edit_chats");
-                    // Send the message with the inline keyboard to the chat.
-                    sendMessageWithInlineKeyboard(chatId, sb.toString(), inlineKeyboardMarkup);
-                } else {
-                    sendChatMessage(chatId, "У вас нет прав администратора для редактирования чата!");
-                }
-            } else {
-                sendChatMessage(chatId, "Чат не зарегистрирован!");
-            }
-        } else {
-            sendChatMessage(chatId, "Команда /editchats доступна только в приватных чатах!");
-        }
-    }
-
-    // This method creates an inline keyboard markup with Add, Delete, and Edit buttons.
-    // The provided callback data is used to set the appropriate callback for each button.
-    private InlineKeyboardMarkup createInlineKeyboardMarkup(String addCallbackData, String deleteCallbackData, String editCallbackData) {
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-
-        InlineKeyboardButton addButton = new InlineKeyboardButton("Add");
-        addButton.setCallbackData(addCallbackData);
-
-        InlineKeyboardButton deleteButton = new InlineKeyboardButton("Delete");
-        deleteButton.setCallbackData(deleteCallbackData);
-
-        InlineKeyboardButton editButton = new InlineKeyboardButton("Edit");
-        editButton.setCallbackData(editCallbackData);
-
-        List<InlineKeyboardButton> keyboardButtonsRow = new ArrayList<>();
-        keyboardButtonsRow.add(addButton);
-        keyboardButtonsRow.add(deleteButton);
-        keyboardButtonsRow.add(editButton);
-
-        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-        rowList.add(keyboardButtonsRow);
-
-        inlineKeyboardMarkup.setKeyboard(rowList);
-        return inlineKeyboardMarkup;
-    }
-
-    // This method sends a message with the provided text and inline keyboard markup to the specified chat.
-    private void sendMessageWithInlineKeyboard(Long chatId, String text, InlineKeyboardMarkup inlineKeyboardMarkup) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
-        message.setText(text);
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            logger.error("Error sending message to chat: {}", chatId, e);
-        }
-    }
-
-    private void resetWinners(Long chatId) {
-        List<User> users = userRepository.findByChatid(chatId);
-
-        for (User user : users) {
-            user.setHaswon(false);
-            userRepository.save(user);
-        }
-        sendChatMessage(chatId, "Победители сброшены!");
-    }
-
-    private void showUsers(Long chatId) {
-        List<String> fieldsToDisplay = Arrays.asList("name", "username", "haswon");
-        Map<String, String> customHeaders = new HashMap<>();
-        customHeaders.put("name", "имя");
-        customHeaders.put("haswon", "выиграл");
-        String text = generateUserListMessage(chatId, fieldsToDisplay, customHeaders);
-        sendChatMessage(chatId, text);
-    }
-
-    public String generateUserListMessage(Long chatId, List<String> fieldsToDisplay, Map<String, String> customHeaders) {
-        List<User> users = userRepository.findByChatid(chatId);
-        if (users.isEmpty()) {
-            return "Участники розыгрышей в этом чате отсутствуют";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("Участники розыгрышей в этом чате:\n");
-
-        // Add headers row
-        for (String field : fieldsToDisplay) {
-            sb.append("| ");
-            String customHeader = customHeaders.getOrDefault(field, field);
-            sb.append(customHeader);
-            sb.append(" ");
-        }
-        sb.append("|\n");
-
-        // Add values
-        for (User user : users) {
-            for (String field : fieldsToDisplay) {
-                sb.append("| ");
-                switch (field) {
-                    case "id" -> sb.append(user.getId());
-                    case "chatid" -> sb.append(user.getChatid());
-                    case "name" -> sb.append(user.getName());
-                    case "username" -> sb.append(user.getUsername());
-                    case "haswon" -> sb.append(user.isHaswon() ? "Yes" : "No");
-                }
-                sb.append(" ");
-            }
-            sb.append("|\n");
-        }
-
-        return sb.toString();
-    }
-
-    private void showNotifications(Long chatId) {
-        List<String> fieldsToDisplay = Arrays.asList("text", "datetime", "repetition", "datetimexcluded");
-        Map<String, String> customHeaders = new HashMap<>();
-        customHeaders.put("text", "Текст уведомления: ");
-        customHeaders.put("datetime", "Дата и время: ");
-        customHeaders.put("repetition", "Частота: ");
-        customHeaders.put("datetimexcluded", "Исключения: \n");
-        String text = generateNotificationListMessage(chatId, fieldsToDisplay, customHeaders);
-        sendChatMessage(chatId, text);
-    }
-
-    public String generateNotificationListMessage(Long chatId, List<String> fieldsToDisplay, Map<String, String> customHeaders) {
-        List<Notification> notifications = notificationRepository.findByChatid(chatId);
-        if (notifications.isEmpty()) {
-            return "Уведомления для этого чата отсутствуют";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("Уведомления для этого чата: \n\n");
-
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
-
-        for (Notification notification : notifications) {
-            for (String field : fieldsToDisplay) {
-                switch (field) {
-                    case "id" -> {
-                        String customHeader = customHeaders.getOrDefault(field, field);
-                        sb.append(customHeader).append(notification.getId()).append("\n");
-                    }
-                    case "chatid" -> {
-                        String customHeader = customHeaders.getOrDefault(field, field);
-                        sb.append(customHeader).append(notification.getChatid()).append("\n");
-                    }
-                    case "text" -> {
-                        String customHeader = customHeaders.getOrDefault(field, field);
-                        sb.append(customHeader).append(notification.getText()).append("\n");
-                    }
-                    case "datetime" -> {
-                        String customHeader = customHeaders.getOrDefault(field, field);
-                        sb.append(customHeader).append(notification.getDatetime().withZoneSameInstant(properties.getTimeZone()).format(dateTimeFormatter)).append("\n");
-                    }
-                    case "repetition" -> {
-                        String customHeader = customHeaders.getOrDefault(field, field);
-                        sb.append(customHeader).append(notification.getRepetition()).append("\n");
-                    }
-                    case "datetimexcluded" -> {
-                        if (notification.getDatetimexcluded() != null) {
-                            String customHeader = customHeaders.getOrDefault(field, field);
-                            sb.append(customHeader);
-                            if (notification.getDatetimexcluded().get("weekends").asBoolean()) {
-                                sb.append("  - Исключить СБ и ВС\n");
-                            }
-                            ArrayNode skipDays = (ArrayNode) notification.getDatetimexcluded().get("skip_days");
-                            if (skipDays != null) {
-                                sb.append("  - Исключить дни: \n");
-                                for (JsonNode skipDay : skipDays) {
-                                    int frequency = skipDay.get("frequency").asInt();
-                                    String dayStr = skipDay.get("day").asText();
-                                    sb.append("    * ").append(dayStr).append(" (every ").append(frequency).append(" days)\n");
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            sb.append("\n");
-        }
-        return sb.toString();
-    }
-
-
-    private User findWinner(Long chatId) {
-        List<User> users = userRepository.findByChatid(chatId);
-
-        if (users.isEmpty()) {
-            return null;
-        }
-
-        List<User> usersWithoutWin = new ArrayList<>();
-        for (User user : users) {
-            if (!user.isHaswon()) {
-                usersWithoutWin.add(user);
-            }
-        }
-
-        if (usersWithoutWin.isEmpty()) {
-            for (User user : users) {
-                user.setHaswon(false);
-                userRepository.save(user);
-            }
-            usersWithoutWin.addAll(users);
-        }
-
-        Random random = new Random();
-        int winnerIndex = random.nextInt(usersWithoutWin.size());
-        User winner = usersWithoutWin.get(winnerIndex);
-        winner.setHaswon(true);
-        userRepository.save(winner);
-
-        return winner;
-    }
-
-    private void nextWinner(Long chatId) {
-        User winner = findWinner(chatId);
-
-        if (winner == null) {
-            sendChatMessage(chatId, "Участники для розыгрыша в этом чате отсутствуют");
-        } else {
-            sendChatMessage(chatId, "Участник " + winner.getName() + ", @" + winner.getUsername() + " выиграл!");
-        }
-    }
 
     private void sendChatMessage(Long chatId, String text) {
         SendMessage message = new SendMessage();
@@ -728,7 +238,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         try {
             execute(message);
         } catch (TelegramApiException e) {
-            logger.error("Error sending message to chat: {}", e);
+            logger.error("Error sending message to chat: {}", message.getChatId(), e);
         }
     }
 
@@ -774,7 +284,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
 
                     // Update the notification's "datetimexcluded" field
                     notification.setDatetimexcluded(datetimexcluded);
-                    notificationRepository.save(notification);
+                    notificationManagementController.save(notification);
 
                     return true;
                 }
@@ -789,7 +299,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     //It is scheduled to run every 60 seconds after an initial delay of 1 second.
     @Scheduled(fixedRate = 60000, initialDelay = 1000) // Run every 60 seconds
     public void checkAndSendNotifications() {
-        List<Notification> notifications = notificationRepository.findAll();
+        List<Notification> notifications = notificationManagementController.findAll();
 
         for (Notification notification : notifications) {
             ZonedDateTime notificationDateTime = notification.getDatetime();
@@ -798,14 +308,14 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             // Check if the current time is within the 1-minute time window of the notification's scheduled time
             if ((now.isEqual(notificationDateTime) || (now.isAfter(notificationDateTime) && now.isBefore(notificationDateTime.plusMinutes(1))))) {
                 if (!isNotificationExcluded(notification, now)) {
-                    Optional<Chat> optionalChat = chatRepository.findById(notification.getChatid());
+                    Optional<Chat> optionalChat = chatManagementController.findById(notification.getChatid());
                     if (optionalChat.isPresent()) {
                         Chat chat = optionalChat.get();
                         String text = notification.getText();
 
                         // Replace "@name" and "@username" placeholders with the winner's name and username, if applicable
                         if (text.contains("@name") || text.contains("@username")) {
-                            User winner = findWinner(chat.getTelegramchatid());
+                            User winner = userManagementController.findWinner(chat.getTelegramchatid());
                             if (winner != null) {
                                 text = text.replace("@name", winner.getName());
                                 text = text.replace("@username", "@" + winner.getUsername());
@@ -815,7 +325,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                         }
                         sendChatMessage(chat.getTelegramchatid(), text);
                     } else {
-                        notificationRepository.delete(notification);
+                        notificationManagementController.delete(notification);
                     }
                 }
                 // Update the notification's scheduled time based on its repetition setting
@@ -823,25 +333,25 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                 switch (notification.getRepetition()) {
                     case "minutely" -> {
                         notification.setDatetime(notificationDateTime.plusMinutes(5));
-                        notificationRepository.save(notification);
+                        notificationManagementController.save(notification);
                     }
                     case "hourly" -> {
                         notification.setDatetime(notificationDateTime.plusHours(1));
-                        notificationRepository.save(notification);
+                        notificationManagementController.save(notification);
                     }
                     case "daily" -> {
                         notification.setDatetime(notificationDateTime.plusDays(1));
-                        notificationRepository.save(notification);
+                        notificationManagementController.save(notification);
                     }
                     case "weekly" -> {
                         notification.setDatetime(notificationDateTime.plusWeeks(1));
-                        notificationRepository.save(notification);
+                        notificationManagementController.save(notification);
                     }
                     case "monthly" -> {
                         notification.setDatetime(notificationDateTime.plusMonths(1));
-                        notificationRepository.save(notification);
+                        notificationManagementController.save(notification);
                     }
-                    case "once" -> notificationRepository.delete(notification);
+                    case "once" -> notificationManagementController.delete(notification);
                 }
             }
         }

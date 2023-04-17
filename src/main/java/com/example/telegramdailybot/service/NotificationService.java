@@ -73,35 +73,44 @@ public class NotificationService {
         if (!matcher.find()) {
             return null;
         }
-        Integer id = Integer.parseInt(matcher.group(1));
-        if (id == null) {
+        try {
+            int id = Integer.parseInt(matcher.group(1));
+
+            // Parse the notification from the message text
+            ParseResult parseResult = BotUtils.parseNotificationText(text, telegramDailyBotProperties.getTimeZone());
+            if (parseResult.hasError()) {
+                // Send an error message if the text could not be parsed
+                return "Ошибка при редактировании уведомления. " + parseResult.getErrorMessage();
+            }
+            Notification notificationUpdated = parseResult.getNotification();
+
+            Notification notificationCurrent = findById(id).orElse(null);
+
+            if (notificationCurrent != null && (chatService.isAdmin(chatId) || chatId == userId)) {
+                notificationCurrent.setText(notificationUpdated.getText());
+                notificationCurrent.setDatetime(notificationUpdated.getDatetime());
+                notificationCurrent.setRepetition(notificationUpdated.getRepetition());
+                notificationCurrent.setDatetimexcluded(notificationUpdated.getDatetimexcluded());
+                // Save the notification to the database
+                save(notificationCurrent);
+            }
+
+            return "Уведомление успешно отредактировано";
+        } catch (NumberFormatException e) {
             return "Ошибка при парсинге ID. Пожалуйста, проверьте формат и попробуйте еще раз.";
         }
-
-        // Parse the notification from the message text
-        ParseResult parseResult = BotUtils.parseNotificationText(text, telegramDailyBotProperties.getTimeZone());
-        if (parseResult.hasError()) {
-            // Send an error message if the text could not be parsed
-            return "Ошибка при редактировании уведомления. " + parseResult.getErrorMessage();
-        }
-        Notification notificationUpdated = parseResult.getNotification();
-
-        Notification notificationCurrent = findById(id).orElse(null);
-
-        if (notificationCurrent != null && (chatService.isAdmin(chatId) || chatId == userId)) {
-            notificationCurrent.setText(notificationUpdated.getText());
-            notificationCurrent.setDatetime(notificationUpdated.getDatetime());
-            notificationCurrent.setRepetition(notificationUpdated.getRepetition());
-            notificationCurrent.setDatetimexcluded(notificationUpdated.getDatetimexcluded());
-            // Save the notification to the database
-            save(notificationCurrent);
-        }
-
-        return "Уведомление успешно отредактировано";
     }
 
     public Notification save(Notification notification) {
         return notificationRepository.save(notification);
+    }
+
+    public List<Notification> findAll() {
+        return notificationRepository.findAll();
+    }
+
+    public void delete(Notification notification) {
+        notificationRepository.delete(notification);
     }
 
     public void deleteById(int id) {

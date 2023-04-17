@@ -1,5 +1,6 @@
 package com.example.telegramdailybot.controller;
 
+import com.example.telegramdailybot.model.Chat;
 import com.example.telegramdailybot.model.UserActionState;
 import com.example.telegramdailybot.service.ChatService;
 import com.example.telegramdailybot.util.BotUtils;
@@ -9,6 +10,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.Map;
+import java.util.Optional;
 
 
 @Controller
@@ -133,5 +135,13 @@ public class ChatManagementController {
         message.setChatId(update.getMessage().getChatId());
         message.setText(text);
         return message;
+    }
+
+    public boolean existsById(long id) {
+        return chatService.existsById(id);
+    }
+
+    public Optional<Chat> findById(long chatId) {
+        return chatService.findById(chatId);
     }
 }

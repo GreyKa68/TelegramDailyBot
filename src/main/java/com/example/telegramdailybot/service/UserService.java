@@ -67,7 +67,7 @@ public class UserService {
         for (String line : lines) {
             String[] parts = line.split(",", 3);
             if (parts.length == 3) {
-                Integer id = Integer.parseInt(parts[0].trim());
+                int id = Integer.parseInt(parts[0].trim());
                 String name = parts[1].trim();
                 String username = parts[2].trim().replace("@", "");
 
@@ -102,11 +102,11 @@ public class UserService {
         });
     }
 
-    public String findWinner(Long chatId) {
+    public User findWinner(Long chatId) {
         List<User> users = findByChatid(chatId);
 
         if (users.isEmpty()) {
-            return "Участники для розыгрыша в этом чате отсутствуют";
+            return null;
         }
 
         List<User> usersWithoutWin = new ArrayList<>();
@@ -130,7 +130,7 @@ public class UserService {
         winner.setHaswon(true);
         save(winner);
 
-        return "Участник " + winner.getName() + ", @" + winner.getUsername() + " выиграл!";
+        return winner;
     }
 
     public String generateUserListMessage(Long chatId, List<String> fieldsToDisplay, Map<String, String> customHeaders) {
