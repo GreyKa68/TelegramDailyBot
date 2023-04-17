@@ -186,8 +186,6 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     private void handleCallbackQuery(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
         String data = callbackQuery.getData();
-        Long userId = callbackQuery.getFrom().getId();
-        Long chatId = callbackQuery.getMessage().getChatId();
 
         switch (data) {
             case "add_users" -> userManagementController.initiateAddUsersProcess(update, userActionStates);
@@ -199,9 +197,9 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                     notificationManagementController.initiateDeleteNotificationsProcess(update, userActionStates);
             case "edit_notification" ->
                     notificationManagementController.initiateEditNotificationProcess(update, userActionStates);
-            case "add_chats" -> initiateAddChatsProcess(userId, chatId);
-            case "delete_chats" -> initiateDeleteChatsProcess(userId, chatId);
-            case "edit_chats" -> initiateEditChatsProcess(userId, chatId);
+            case "add_chats" -> chatManagementController.initiateAddChatsProcess(update, userActionStates);
+            case "delete_chats" -> chatManagementController.initiateDeleteChatsProcess(update, userActionStates);
+            case "edit_chats" -> chatManagementController.initiateEditChatsProcess(update, userActionStates);
         }
 
         // Acknowledge the callback query

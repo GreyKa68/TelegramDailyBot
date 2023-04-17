@@ -4,6 +4,7 @@ import com.example.telegramdailybot.model.Chat;
 import com.example.telegramdailybot.repository.ChatRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +34,7 @@ public class ChatService {
         return chatRepository.findAll();
     }
 
+    @Transactional
     public void addChatsFromText(String text) {
         // Parse and add chats from the message text
         String[] lines = text.split("\\n");
@@ -54,6 +56,7 @@ public class ChatService {
         }
     }
 
+    @Transactional
     public void deleteChatsFromText(String text) {
         String[] lines = text.split("\\n");
 
@@ -63,6 +66,7 @@ public class ChatService {
         }
     }
 
+    @Transactional
     public void editChatsFromText(String text) {
         String[] lines = text.split("\\n");
 
