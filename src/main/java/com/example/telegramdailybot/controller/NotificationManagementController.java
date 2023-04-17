@@ -149,4 +149,61 @@ public class NotificationManagementController {
             return message;
         }
     }
+
+    public SendMessage initiateAddNotificationProcess(Update update, Map<Long, UserActionState> userActionStates) {
+        userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_NOTIFICATION_TO_ADD);
+
+        String text = """
+                Пожалуйста, пришлите уведомление согласно следующему шаблону. Для удобства шаблон можно скопировать, вставить и отредактировать
+
+                Текст уведомления: Все на дейли, сегодня шарит @name, @username!
+                Дата и время: 2023-04-06T14:00
+                Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}
+                Исключения:
+                  - Исключить СБ и ВС
+                  - Исключить дни:
+                    * 2023-04-12 (every 7 days)
+                    * 2023-04-24 (every 21 days)
+                    * 2023-04-07 (every 7 days)""";
+
+        SendMessage message = new SendMessage();
+        message.setChatId(update.getMessage().getChatId());
+        message.setText(text);
+        return message;
+    }
+
+    public SendMessage initiateDeleteNotificationsProcess(Update update, Map<Long, UserActionState> userActionStates) {
+        userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_NOTIFICATION_TO_DELETE);
+        String text = """
+                Пожалуйста, вышлите ID уведомлений, которые вы хотите удалить, каждый ID с новой строчки. Например:
+
+                10
+                11
+                12""";
+        SendMessage message = new SendMessage();
+        message.setChatId(update.getMessage().getChatId());
+        message.setText(text);
+        return message;
+    }
+
+    public SendMessage initiateEditNotificationProcess(Update update, Map<Long, UserActionState> userActionStates) {
+        userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_NOTIFICATION_TO_EDIT);
+        String text = """
+                Пожалуйста, пришлите измененное уведомление согласно следующему шаблону. Для удобства скопируйте предыдущую версию уведомления и измените ее
+                                
+                ID: 11
+                Текст уведомления: Все на дейли, сегодня шарит @name, @username!
+                Дата и время: 2023-04-06T14:00
+                Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}
+                Исключения:
+                  - Исключить СБ и ВС
+                  - Исключить дни:
+                    * 2023-04-12 (every 7 days)
+                    * 2023-04-24 (every 21 days)
+                    * 2023-04-07 (every 7 days)""";
+        SendMessage message = new SendMessage();
+        message.setChatId(update.getMessage().getChatId());
+        message.setText(text);
+        return message;
+    }
 }
