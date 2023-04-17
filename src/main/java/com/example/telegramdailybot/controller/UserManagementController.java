@@ -6,7 +6,6 @@ import com.example.telegramdailybot.service.UserService;
 import com.example.telegramdailybot.util.BotUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -29,19 +28,11 @@ public class UserManagementController {
         this.chatService = chatService;
     }
 
-    public String addUser(Update update) {
-        return "User added successfully.";
-    }
-
-    public String deleteUser(Update update) {
-        return "User deleted successfully.";
-    }
-
     public SendMessage resetWinners(Update update) {
         userService.resetWinners(update.getMessage().getChatId());
         SendMessage message = new SendMessage();
         message.setChatId(update.getMessage().getChatId());
-        message.setText("Winners reset successfully.");
+        message.setText("Победители сброшены!");
         return message;
     }
 
@@ -90,7 +81,7 @@ public class UserManagementController {
         }
     }
 
-    @Transactional
+
     public SendMessage addUsers(Update update, Map<Long, UserActionState> userActionStates) {
         // Parse and add users from the message text
         String text = update.getMessage().getText();
@@ -173,18 +164,60 @@ public class UserManagementController {
         }
     }
 
-    public SendMessage initiateAddUsersProcess(Update update, Map<Long, UserActionState> userActionStates) {
-        userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_USERS_TO_ADD);
-        String text = """
-                Пожалуйста, вышлите через запятую: имя, @username. Например:
+    public SendMessage addUsersByAdmin(Update update, Map<Long, UserActionState> userActionStates) {
+        // Parse and add users from the message text
+        String[] parts = update.getMessage().getText().split("\n", 2);
+        try {
+            Long targetChatId = Long.parseLong(parts[0]);
+            String text = parts[1];
 
-                Вася,@vasyatelegram
-                Петя,@evilusername
-                Эвелина,@evacool""";
-        SendMessage message = new SendMessage();
-        message.setChatId(update.getMessage().getChatId());
-        message.setText(text);
-        return message;
+            userService.addUsersFromText(text, targetChatId);
+
+            // Remove the user from the userAddingStates map
+            userActionStates.remove(update.getMessage().getFrom().getId());
+
+            // Send a confirmation message to the user
+            SendMessage message = new SendMessage();
+            message.setChatId(update.getMessage().getChatId());
+            message.setText("Участники успешно добавлены");
+
+            return message;
+        } catch (NumberFormatException e) {
+            SendMessage message = new SendMessage();
+            message.setChatId(update.getMessage().getChatId());
+            message.setText("Неверный формат ID чата. Введите корректный ID чата:");
+            return message;
+        }
+    }
+
+    public SendMessage initiateAddUsersProcess(Update update, Map<Long, UserActionState> userActionStates) {
+        boolean isUserChat = update.getMessage().getChat().isUserChat();
+        boolean isAdmin = chatService.isAdmin(update.getMessage().getFrom().getId());
+        if (isUserChat && isAdmin) {
+            userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_CHAT_ID_TO_ADD_USERS);
+            String text = """
+                    Первой строкой вышлите ID чата, в который хотите добавить участников. Далее с новых строчек вышлите через запятую: имя, @username. Например:
+                    -123456789
+                    Вася,@vasyatelegram
+                    Петя,@evilusername
+                    Эвелина,@evacool""";
+            SendMessage message = new SendMessage();
+            message.setChatId(update.getMessage().getChatId());
+            message.setText(text);
+            return message;
+        } else {
+            userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_USERS_TO_ADD);
+            String text = """
+                    Пожалуйста, вышлите через запятую: имя, @username. Например:
+
+                    Вася,@vasyatelegram
+                    Петя,@evilusername
+                    Эвелина,@evacool""";
+            SendMessage message = new SendMessage();
+            message.setChatId(update.getMessage().getChatId());
+            message.setText(text);
+            return message;
+        }
     }
 
     public SendMessage initiateDeleteUsersProcess(Update update, Map<Long, UserActionState> userActionStates) {
