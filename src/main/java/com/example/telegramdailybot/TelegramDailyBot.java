@@ -190,9 +190,9 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         Long chatId = callbackQuery.getMessage().getChatId();
 
         switch (data) {
-            case "add_users" -> initiateAddUsersProcess(userId, chatId);
-            case "delete_users" -> initiateDeleteUsersProcess(userId, chatId);
-            case "edit_users" -> initiateEditUsersProcess(userId, chatId);
+            case "add_users" -> userManagementController.initiateAddUsersProcess(update, userActionStates);
+            case "delete_users" -> userManagementController.initiateDeleteUsersProcess(update, userActionStates);
+            case "edit_users" -> userManagementController.initiateEditUsersProcess(update, userActionStates);
             case "add_notification" -> initiateAddNotificationProcess(userId, chatId);
             case "delete_notifications" -> initiateDeleteNotificationsProcess(userId, chatId);
             case "edit_notification" -> initiateEditNotificationProcess(userId, chatId);

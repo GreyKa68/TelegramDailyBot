@@ -173,5 +173,47 @@ public class UserManagementController {
         }
     }
 
+    public SendMessage initiateAddUsersProcess(Update update, Map<Long, UserActionState> userActionStates) {
+        userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_USERS_TO_ADD);
+        String text = """
+                Пожалуйста, вышлите через запятую: имя, @username. Например:
+
+                Вася,@vasyatelegram
+                Петя,@evilusername
+                Эвелина,@evacool""";
+        SendMessage message = new SendMessage();
+        message.setChatId(update.getMessage().getChatId());
+        message.setText(text);
+        return message;
+    }
+
+    public SendMessage initiateDeleteUsersProcess(Update update, Map<Long, UserActionState> userActionStates) {
+        userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_USERS_TO_DELETE);
+        String text = """
+                Пожалуйста, вышлите ID участников, которых вы хотите удалить, каждый ID с новой строчки. Например:
+
+                10
+                11
+                12""";
+        SendMessage message = new SendMessage();
+        message.setChatId(update.getMessage().getChatId());
+        message.setText(text);
+        return message;
+    }
+
+    public SendMessage initiateEditUsersProcess(Update update, Map<Long, UserActionState> userActionStates) {
+        userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_USERS_TO_EDIT);
+        String text = """
+                Пожалуйста, вышлите через запятую: ID участника, которого вы хотите изменить, имя, username. Например:
+
+                10,Вася,vasyatelegram
+                11,Петя,evilusername
+                12,Эвелина,evacool""";
+        SendMessage message = new SendMessage();
+        message.setChatId(update.getMessage().getChatId());
+        message.setText(text);
+        return message;
+    }
+
 }
 
