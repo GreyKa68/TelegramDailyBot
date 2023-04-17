@@ -1,11 +1,14 @@
 package com.example.telegramdailybot.controller;
 
+import com.example.telegramdailybot.model.UserActionState;
 import com.example.telegramdailybot.service.ChatService;
 import com.example.telegramdailybot.util.BotUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+
+import java.util.Map;
 
 
 @Controller
@@ -17,7 +20,7 @@ public class ChatManagementController {
         this.chatService = chatService;
     }
 
-    public SendMessage editChats(Update update) {
+    public SendMessage editChatsMessage(Update update) {
         long chatId = update.getMessage().getChatId();
         boolean isUserChat = update.getMessage().getChat().isUserChat();
         boolean isAdmin = chatService.isAdmin(update.getMessage().getFrom().getId());
@@ -42,6 +45,21 @@ public class ChatManagementController {
             message.setText("Команда /editchats доступна только в приватных чатах!");
             return message;
         }
+    }
+
+    public SendMessage addChats(Update update, Map<Long, UserActionState> userActionStates) {
+        String text = update.getMessage().getText();
+        chatService.addChatsFromText(text);
+
+        // Remove the user from the userAddingStates map
+        userActionStates.remove(update.getMessage().getFrom().getId());
+
+        // Send a confirmation message to the user
+        SendMessage message = new SendMessage();
+        message.setChatId(update.getMessage().getChatId());
+        message.setText("Чаты успешно добавлены");
+
+        return message;
     }
 
 }
