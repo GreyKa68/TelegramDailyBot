@@ -57,6 +57,27 @@ public class UserService {
         }
     }
 
+    public void editUsersFromText(String text, long chatId, long userId) {
+        String[] lines = text.split("\\n");
+
+        for (String line : lines) {
+            String[] parts = line.split(",", 3);
+            if (parts.length == 3) {
+                Integer id = Integer.parseInt(parts[0].trim());
+                String name = parts[1].trim();
+                String username = parts[2].trim().replace("@", "");
+
+                User user = findById(id).orElse(null);
+
+                if (user != null && (chatService.isAdmin(userId) || userId == chatId)) {
+                    user.setName(name);
+                    user.setUsername(username);
+                    save(user);
+                }
+            }
+        }
+    }
+
     public void deleteById(int id) {
         userRepository.deleteById(id);
     }

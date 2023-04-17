@@ -129,7 +129,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             case "/resetwinners" -> sendChatMessage(userManagementController.resetWinners(update));
             case "/showusers" -> sendChatMessage(userManagementController.showUsers(update));
             case "/shownotifications" -> sendChatMessage(notificationManagementController.showNotifications(update));
-            case "/editusers" -> sendChatMessage(userManagementController.editUsers(update, userActionStates));
+            case "/editusers" -> sendChatMessage(userManagementController.editUsersMessage(update, userActionStates));
             case "/editnotifications" ->
                     sendChatMessage(notificationManagementController.editNotifications(update, userActionStates));
             case "/editchats" -> sendChatMessage(chatManagementController.editChats(update));
@@ -155,10 +155,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                     sendChatMessage(userManagementController.addUsers(update, userActionStates));
             case WAITING_FOR_USERS_TO_DELETE ->
                     sendChatMessage(userManagementController.deleteUsers(update, userActionStates));
-            case WAITING_FOR_USERS_TO_EDIT -> {
-                SendMessage msg = userEditHandler.handleUserEditing(userActionStates, message, text, chatId, userId);
-                sendChatMessage(chatId, msg.getText());
-            }
+            case WAITING_FOR_USERS_TO_EDIT ->
+                    sendChatMessage(userManagementController.editUsers(update, userActionStates));
             case WAITING_FOR_NOTIFICATION_TO_ADD -> handleNotificationAdding(message, text, chatId, userId);
             case WAITING_FOR_NOTIFICATION_TO_DELETE -> {
                 SendMessage msg = notificationDeletionHandler.handleNotificationDeleting(userActionStates, message, text, chatId, userId);
