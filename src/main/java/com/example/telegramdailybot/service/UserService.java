@@ -21,6 +21,26 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public void addUsersFromText(String text, long chatId) {
+        String[] lines = text.split("\\n");
+
+        for (String line : lines) {
+            String[] parts = line.split(",", 2);
+            if (parts.length == 2) {
+                String name = parts[0].trim();
+                String username = parts[1].trim().replace("@", "");
+
+                User user = new User();
+                user.setName(name);
+                user.setUsername(username);
+                user.setChatid(chatId);
+                user.setHaswon(false);
+
+                save(user);
+            }
+        }
+    }
+
     public Optional<User> findById(int id) {
         return userRepository.findById(id);
     }

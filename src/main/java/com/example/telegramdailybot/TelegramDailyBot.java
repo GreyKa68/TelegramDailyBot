@@ -364,7 +364,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
         String text = """
                 Пожалуйста, пришлите измененное уведомление согласно следующему шаблону. Для удобства скопируйте предыдущую версию уведомления и измените ее
                                 
-                ID 11
+                ID: 11
                 Текст уведомления: Все на дейли, сегодня шарит @name, @username!
                 Дата и время: 2023-04-06T14:00
                 Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}

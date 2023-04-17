@@ -1,6 +1,5 @@
 package com.example.telegramdailybot.controller;
 
-import com.example.telegramdailybot.model.User;
 import com.example.telegramdailybot.model.UserActionState;
 import com.example.telegramdailybot.service.ChatService;
 import com.example.telegramdailybot.service.UserService;
@@ -91,23 +90,8 @@ public class UserManagementController {
     public SendMessage addUsers(Update update, Map<Long, UserActionState> userActionStates) {
         // Parse and add users from the message text
         String text = update.getMessage().getText();
-        String[] lines = text.split("\\n");
+        userService.addUsersFromText(text, update.getMessage().getChatId());
 
-        for (String line : lines) {
-            String[] parts = line.split(",", 2);
-            if (parts.length == 2) {
-                String name = parts[0].trim();
-                String username = parts[1].trim().replace("@", "");
-
-                User user = new User();
-                user.setName(name);
-                user.setUsername(username);
-                user.setChatid(update.getMessage().getChatId());
-                user.setHaswon(false);
-
-                userService.save(user);
-            }
-        }
         // Remove the user from the userAddingStates map
         userActionStates.remove(update.getMessage().getFrom().getId());
 
