@@ -150,26 +150,72 @@ public class NotificationManagementController {
         }
     }
 
+    public SendMessage addNotificationByAdmin(Update update, Map<Long, UserActionState> userActionStates) {
+        String[] parts = update.getMessage().getText().split("\n", 2);
+        try {
+            Long targetChatId = Long.parseLong(parts[0]);
+            String text = parts[1];
+
+            String textMessage = notificationService.addNotificationFromText(parts[1], targetChatId);
+
+            // Remove the user from the userAddingStates map
+            userActionStates.remove(update.getMessage().getFrom().getId());
+
+            SendMessage message = new SendMessage();
+            message.setChatId(update.getMessage().getChatId());
+            message.setText(textMessage);
+            return message;
+        } catch (NumberFormatException e) {
+            SendMessage message = new SendMessage();
+            message.setChatId(update.getMessage().getChatId());
+            message.setText("Неверный формат ID чата. Введите корректный ID чата:");
+            return message;
+        }
+    }
+
     public SendMessage initiateAddNotificationProcess(Update update, Map<Long, UserActionState> userActionStates) {
-        userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_NOTIFICATION_TO_ADD);
+        boolean isUserChat = update.getMessage().getChat().isUserChat();
+        boolean isAdmin = chatService.isAdmin(update.getMessage().getFrom().getId());
+        if (isUserChat && isAdmin) {
+            userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_CHAT_ID_TO_ADD_NOTIFICATION);
+            String text = """
+                    Первой строкой вышлите ID чата, в который хотите добавить уведомления. Далее пришлите уведомление согласно следующему шаблону. Для удобства шаблон можно скопировать, вставить и отредактировать
+                                    
+                    -1234567890
+                    Текст уведомления: Все на дейли, сегодня шарит @name, @username!
+                    Дата и время: 2023-04-06T14:00
+                    Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}
+                    Исключения:
+                      - Исключить СБ и ВС
+                      - Исключить дни:
+                        * 2023-04-12 (every 7 days)
+                        * 2023-04-24 (every 21 days)
+                        * 2023-04-07 (every 7 days)""";
+            SendMessage message = new SendMessage();
+            message.setChatId(update.getMessage().getChatId());
+            message.setText(text);
+            return message;
+        } else {
+            userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_NOTIFICATION_TO_ADD);
 
-        String text = """
-                Пожалуйста, пришлите уведомление согласно следующему шаблону. Для удобства шаблон можно скопировать, вставить и отредактировать
+            String text = """
+                    Пожалуйста, пришлите уведомление согласно следующему шаблону. Для удобства шаблон можно скопировать, вставить и отредактировать
 
-                Текст уведомления: Все на дейли, сегодня шарит @name, @username!
-                Дата и время: 2023-04-06T14:00
-                Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}
-                Исключения:
-                  - Исключить СБ и ВС
-                  - Исключить дни:
-                    * 2023-04-12 (every 7 days)
-                    * 2023-04-24 (every 21 days)
-                    * 2023-04-07 (every 7 days)""";
+                    Текст уведомления: Все на дейли, сегодня шарит @name, @username!
+                    Дата и время: 2023-04-06T14:00
+                    Частота: {once|minutely|hourly|daily|weekly|monthly|yearly}
+                    Исключения:
+                      - Исключить СБ и ВС
+                      - Исключить дни:
+                        * 2023-04-12 (every 7 days)
+                        * 2023-04-24 (every 21 days)
+                        * 2023-04-07 (every 7 days)""";
 
-        SendMessage message = new SendMessage();
-        message.setChatId(update.getMessage().getChatId());
-        message.setText(text);
-        return message;
+            SendMessage message = new SendMessage();
+            message.setChatId(update.getMessage().getChatId());
+            message.setText(text);
+            return message;
+        }
     }
 
     public SendMessage initiateDeleteNotificationsProcess(Update update, Map<Long, UserActionState> userActionStates) {

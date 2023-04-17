@@ -181,6 +181,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                     sendChatMessage(notificationManagementController.editNotificationsByAdmin(update, userActionStates));
             case WAITING_FOR_CHAT_ID_TO_ADD_USERS ->
                     sendChatMessage(userManagementController.addUsersByAdmin(update, userActionStates));
+            case WAITING_FOR_CHAT_ID_TO_ADD_NOTIFICATION ->
+                    sendChatMessage(notificationManagementController.addNotificationByAdmin(update, userActionStates));
         }
     }
 
