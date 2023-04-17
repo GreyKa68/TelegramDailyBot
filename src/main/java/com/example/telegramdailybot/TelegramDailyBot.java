@@ -11,7 +11,7 @@ import com.example.telegramdailybot.repository.ChatRepository;
 import com.example.telegramdailybot.repository.NotificationRepository;
 import com.example.telegramdailybot.repository.UserRepository;
 import com.example.telegramdailybot.service.ChatGPT3Service;
-import com.example.telegramdailybot.util.NotificationUtils;
+import com.example.telegramdailybot.util.BotUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -434,7 +434,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
     @Transactional
     private void handleNotificationAdding(Message message, String text, Long chatId, Long userId) {
         // Parse the notification from the message text
-        ParseResult parseResult = NotificationUtils.parseNotificationText(text, properties.getTimeZone());
+        ParseResult parseResult = BotUtils.parseNotificationText(text, properties.getTimeZone());
         if (parseResult.hasError()) {
             // Send an error message if the text could not be parsed
             sendChatMessage(chatId, "Ошибка при добавлении уведомления. " + parseResult.getErrorMessage());

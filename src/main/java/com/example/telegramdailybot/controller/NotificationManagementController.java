@@ -8,9 +8,13 @@ import org.springframework.stereotype.Controller;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.example.telegramdailybot.util.BotUtils.createInlineKeyboardMarkup;
 
 @Controller
 public class NotificationManagementController {
@@ -69,27 +73,4 @@ public class NotificationManagementController {
 
     }
 
-    private InlineKeyboardMarkup createInlineKeyboardMarkup(String addCallbackData, String deleteCallbackData, String editCallbackData) {
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-
-        InlineKeyboardButton addButton = new InlineKeyboardButton("Add");
-        addButton.setCallbackData(addCallbackData);
-
-        InlineKeyboardButton deleteButton = new InlineKeyboardButton("Delete");
-        deleteButton.setCallbackData(deleteCallbackData);
-
-        InlineKeyboardButton editButton = new InlineKeyboardButton("Edit");
-        editButton.setCallbackData(editCallbackData);
-
-        List<InlineKeyboardButton> keyboardButtonsRow = new ArrayList<>();
-        keyboardButtonsRow.add(addButton);
-        keyboardButtonsRow.add(deleteButton);
-        keyboardButtonsRow.add(editButton);
-
-        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
-        rowList.add(keyboardButtonsRow);
-
-        inlineKeyboardMarkup.setKeyboard(rowList);
-        return inlineKeyboardMarkup;
-    }
 }

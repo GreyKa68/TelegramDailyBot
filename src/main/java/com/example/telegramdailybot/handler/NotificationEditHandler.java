@@ -7,7 +7,7 @@ import com.example.telegramdailybot.model.ParseResult;
 import com.example.telegramdailybot.model.UserActionState;
 import com.example.telegramdailybot.repository.ChatRepository;
 import com.example.telegramdailybot.repository.NotificationRepository;
-import com.example.telegramdailybot.util.NotificationUtils;
+import com.example.telegramdailybot.util.BotUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,7 +65,7 @@ public class NotificationEditHandler implements TelegramDailyBotInterface {
         }
 
         // Parse the notification from the message text
-        ParseResult parseResult = NotificationUtils.parseNotificationText(text, timeZone);
+        ParseResult parseResult = BotUtils.parseNotificationText(text, timeZone);
         if (parseResult.hasError()) {
             return createErrorMessage(chatId, "Ошибка при парсинге уведомления. " + parseResult.getErrorMessage());
         }
