@@ -3,6 +3,7 @@ package com.example.telegramdailybot.controller;
 import com.example.telegramdailybot.model.UserActionState;
 import com.example.telegramdailybot.service.ChatService;
 import com.example.telegramdailybot.service.NotificationService;
+import com.example.telegramdailybot.util.BotUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -14,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.telegramdailybot.util.BotUtils.createInlineKeyboardMarkup;
 
 @Controller
 public class NotificationManagementController {
@@ -40,7 +40,7 @@ public class NotificationManagementController {
         return message;
     }
 
-    public SendMessage editNotifications(Update update, Map<Long, UserActionState> userActionStates) {
+    public SendMessage editNotificationsMessage(Update update, Map<Long, UserActionState> userActionStates) {
         long chatId = update.getMessage().getChatId();
         boolean isUserChat = update.getMessage().getChat().isUserChat();
         boolean isAdmin = chatService.isAdmin(update.getMessage().getFrom().getId());
@@ -62,7 +62,7 @@ public class NotificationManagementController {
             text = text + "\n Выберите действие:";
 
             // Create an inline keyboard markup for editing Notifications.
-            InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_notification", "delete_notifications", "edit_notification");
+            InlineKeyboardMarkup inlineKeyboardMarkup = BotUtils.createInlineKeyboardMarkup("add_notification", "delete_notifications", "edit_notification");
 
             SendMessage message = new SendMessage();
             message.setChatId(chatId);
@@ -71,6 +71,18 @@ public class NotificationManagementController {
             return message;
         }
 
+    }
+
+    public SendMessage addNotification(Update update, Map<Long, UserActionState> userActionStates) {
+        String text = notificationService.addNotificationFromText(update.getMessage().getText(), update.getMessage().getChatId());
+
+        // Remove the user from the userAddingStates map
+        userActionStates.remove(update.getMessage().getFrom().getId());
+
+        SendMessage message = new SendMessage();
+        message.setChatId(update.getMessage().getChatId());
+        message.setText(text);
+        return message;
     }
 
 }

@@ -1,12 +1,11 @@
 package com.example.telegramdailybot.controller;
 
 import com.example.telegramdailybot.service.ChatService;
+import com.example.telegramdailybot.util.BotUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
-
-import static com.example.telegramdailybot.util.BotUtils.createInlineKeyboardMarkup;
 
 
 @Controller
@@ -29,7 +28,7 @@ public class ChatManagementController {
                 SendMessage message = new SendMessage();
                 message.setChatId(chatId);
                 message.setText(chatList);
-                message.setReplyMarkup(createInlineKeyboardMarkup("add", "delete", "edit"));
+                message.setReplyMarkup(BotUtils.createInlineKeyboardMarkup("add", "delete", "edit"));
                 return message;
             } else {
                 SendMessage message = new SendMessage();

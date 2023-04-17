@@ -2,7 +2,9 @@ package com.example.telegramdailybot.service;
 
 import com.example.telegramdailybot.config.TelegramDailyBotProperties;
 import com.example.telegramdailybot.model.Notification;
+import com.example.telegramdailybot.model.ParseResult;
 import com.example.telegramdailybot.repository.NotificationRepository;
+import com.example.telegramdailybot.util.BotUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,15 +15,35 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+
 @Service
 public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final TelegramDailyBotProperties telegramDailyBotProperties;
+    private final ChatService chatService;
 
     @Autowired
-    public NotificationService(NotificationRepository notificationRepository, TelegramDailyBotProperties telegramDailyBotProperties) {
+    public NotificationService(NotificationRepository notificationRepository, TelegramDailyBotProperties telegramDailyBotProperties, ChatService chatService) {
         this.notificationRepository = notificationRepository;
         this.telegramDailyBotProperties = telegramDailyBotProperties;
+        this.chatService = chatService;
+    }
+
+    public String addNotificationFromText(String text, long chatId) {
+        // Parse the notification from the message text
+        ParseResult parseResult = BotUtils.parseNotificationText(text, telegramDailyBotProperties.getTimeZone());
+        if (parseResult.hasError()) {
+            // Send an error message if the text could not be parsed
+            return "Ошибка при добавлении уведомления. " + parseResult.getErrorMessage();
+        }
+        Notification notification = parseResult.getNotification();
+        // Set the chat ID
+        notification.setChatid(chatId);
+
+        // Save the notification
+        save(notification);
+
+        return "Уведомление успешно добавлено";
     }
 
     public Notification save(Notification notification) {

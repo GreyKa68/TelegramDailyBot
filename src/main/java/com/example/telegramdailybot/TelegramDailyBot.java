@@ -131,7 +131,7 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
             case "/shownotifications" -> sendChatMessage(notificationManagementController.showNotifications(update));
             case "/editusers" -> sendChatMessage(userManagementController.editUsersMessage(update, userActionStates));
             case "/editnotifications" ->
-                    sendChatMessage(notificationManagementController.editNotifications(update, userActionStates));
+                    sendChatMessage(notificationManagementController.editNotificationsMessage(update, userActionStates));
             case "/editchats" -> sendChatMessage(chatManagementController.editChats(update));
             case "/askchatgpt3" -> askChatGPT3(message, chatId);
             default -> sendChatMessage(chatId, "Неизвестная команда!");
@@ -157,7 +157,8 @@ public class TelegramDailyBot extends TelegramLongPollingBot {
                     sendChatMessage(userManagementController.deleteUsers(update, userActionStates));
             case WAITING_FOR_USERS_TO_EDIT ->
                     sendChatMessage(userManagementController.editUsers(update, userActionStates));
-            case WAITING_FOR_NOTIFICATION_TO_ADD -> handleNotificationAdding(message, text, chatId, userId);
+            case WAITING_FOR_NOTIFICATION_TO_ADD ->
+                    sendChatMessage(notificationManagementController.addNotification(update, userActionStates));
             case WAITING_FOR_NOTIFICATION_TO_DELETE -> {
                 SendMessage msg = notificationDeletionHandler.handleNotificationDeleting(userActionStates, message, text, chatId, userId);
                 sendChatMessage(chatId, msg.getText());

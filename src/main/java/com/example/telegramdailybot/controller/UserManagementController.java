@@ -3,6 +3,7 @@ package com.example.telegramdailybot.controller;
 import com.example.telegramdailybot.model.UserActionState;
 import com.example.telegramdailybot.service.ChatService;
 import com.example.telegramdailybot.service.UserService;
+import com.example.telegramdailybot.util.BotUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.telegramdailybot.util.BotUtils.createInlineKeyboardMarkup;
 
 @Controller
 public class UserManagementController {
@@ -80,7 +80,7 @@ public class UserManagementController {
             customHeaders.put("haswon", "выиграл");
             String text = userService.generateUserListMessage(chatId, fieldsToDisplay, customHeaders);
             text = text + "\n Выберите действие:";
-            InlineKeyboardMarkup inlineKeyboardMarkup = createInlineKeyboardMarkup("add_users", "delete_users", "edit_users");
+            InlineKeyboardMarkup inlineKeyboardMarkup = BotUtils.createInlineKeyboardMarkup("add_users", "delete_users", "edit_users");
 
             SendMessage message = new SendMessage();
             message.setChatId(chatId);
