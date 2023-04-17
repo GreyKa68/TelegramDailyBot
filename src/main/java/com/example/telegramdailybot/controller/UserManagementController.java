@@ -107,6 +107,24 @@ public class UserManagementController {
         return message;
     }
 
+    public SendMessage deleteUsers(Update update, Map<Long, UserActionState> userActionStates) {
+        String text = update.getMessage().getText();
+        long chatId = update.getMessage().getChatId();
+        long userId = update.getMessage().getFrom().getId();
+
+        userService.deleteUsersFromText(text, chatId, userId);
+
+        // Remove the user from the userDeletingStates map
+        userActionStates.remove(userId);
+
+        // Send a confirmation message to the user
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText("Участники успешно удалены");
+
+        return message;
+    }
+
 
 }
 

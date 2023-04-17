@@ -11,10 +11,13 @@ import java.util.*;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ChatService chatService;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, ChatService chatService) {
+
         this.userRepository = userRepository;
+        this.chatService = chatService;
     }
 
     public User save(User user) {
@@ -39,6 +42,23 @@ public class UserService {
                 save(user);
             }
         }
+    }
+
+    public void deleteUsersFromText(String text, long chatId, long userId) {
+        String[] lines = text.split("\\n");
+
+        for (String line : lines) {
+            int userIdtoDelete = Integer.parseInt(line);
+            User user = findById(userIdtoDelete).orElse(null);
+
+            if (user != null && (chatService.isAdmin(userId) || userId == chatId)) {
+                deleteById(userIdtoDelete);
+            }
+        }
+    }
+
+    public void deleteById(int id) {
+        userRepository.deleteById(id);
     }
 
     public Optional<User> findById(int id) {
