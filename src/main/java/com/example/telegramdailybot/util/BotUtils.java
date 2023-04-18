@@ -5,16 +5,20 @@ import com.example.telegramdailybot.model.ParseResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class NotificationUtils {
+public class BotUtils {
 
     public static ParseResult parseNotificationText(String text, ZoneId timeZone) {
         Pattern notificationPattern = Pattern.compile("Текст уведомления:\\s?(.+?)\\nДата и время:\\s?(.+?)\\nЧастота:\\s?(.+?)\\nИсключения:(.*)", Pattern.DOTALL);
@@ -61,5 +65,30 @@ public class NotificationUtils {
             return new ParseResult(null, "Пожалуйста, проверьте соответствие шаблону.");
         }
     }
+
+    public static InlineKeyboardMarkup createInlineKeyboardMarkup(String addCallbackData, String deleteCallbackData, String editCallbackData) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+
+        InlineKeyboardButton addButton = new InlineKeyboardButton("Add");
+        addButton.setCallbackData(addCallbackData);
+
+        InlineKeyboardButton deleteButton = new InlineKeyboardButton("Delete");
+        deleteButton.setCallbackData(deleteCallbackData);
+
+        InlineKeyboardButton editButton = new InlineKeyboardButton("Edit");
+        editButton.setCallbackData(editCallbackData);
+
+        List<InlineKeyboardButton> keyboardButtonsRow = new ArrayList<>();
+        keyboardButtonsRow.add(addButton);
+        keyboardButtonsRow.add(deleteButton);
+        keyboardButtonsRow.add(editButton);
+
+        List<List<InlineKeyboardButton>> rowList = new ArrayList<>();
+        rowList.add(keyboardButtonsRow);
+
+        inlineKeyboardMarkup.setKeyboard(rowList);
+        return inlineKeyboardMarkup;
+    }
+
 }
 
