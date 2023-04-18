@@ -86,7 +86,7 @@ public class NotificationService {
 
             Notification notificationCurrent = findById(id).orElse(null);
 
-            if (notificationCurrent != null && (chatService.isAdmin(chatId) || chatId == userId)) {
+            if (notificationCurrent != null && (chatService.isAdmin(userId) || chatId == userId)) {
                 notificationCurrent.setText(notificationUpdated.getText());
                 notificationCurrent.setDatetime(notificationUpdated.getDatetime());
                 notificationCurrent.setRepetition(notificationUpdated.getRepetition());

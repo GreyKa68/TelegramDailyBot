@@ -205,22 +205,23 @@ public class UserManagementController {
     }
 
     public SendMessage initiateAddUsersProcess(Update update, Map<Long, UserActionState> userActionStates) {
-        boolean isUserChat = update.getMessage().getChat().isUserChat();
-        boolean isAdmin = chatService.isAdmin(update.getMessage().getFrom().getId());
+        boolean isUserChat = update.getCallbackQuery().getMessage().getChat().isUserChat();
+        boolean isAdmin = chatService.isAdmin(update.getCallbackQuery().getFrom().getId());
         if (isUserChat && isAdmin) {
-            userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_CHAT_ID_TO_ADD_USERS);
+            userActionStates.put(update.getCallbackQuery().getFrom().getId(), UserActionState.WAITING_FOR_CHAT_ID_TO_ADD_USERS);
             String text = """
                     Первой строкой вышлите ID чата, в который хотите добавить участников. Далее с новых строчек вышлите через запятую: имя, @username. Например:
+                                        
                     -123456789
                     Вася,@vasyatelegram
                     Петя,@evilusername
                     Эвелина,@evacool""";
             SendMessage message = new SendMessage();
-            message.setChatId(update.getMessage().getChatId());
+            message.setChatId(update.getCallbackQuery().getMessage().getChatId());
             message.setText(text);
             return message;
         } else {
-            userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_USERS_TO_ADD);
+            userActionStates.put(update.getCallbackQuery().getFrom().getId(), UserActionState.WAITING_FOR_USERS_TO_ADD);
             String text = """
                     Пожалуйста, вышлите через запятую: имя, @username. Например:
 
@@ -228,14 +229,14 @@ public class UserManagementController {
                     Петя,@evilusername
                     Эвелина,@evacool""";
             SendMessage message = new SendMessage();
-            message.setChatId(update.getMessage().getChatId());
+            message.setChatId(update.getCallbackQuery().getMessage().getChatId());
             message.setText(text);
             return message;
         }
     }
 
     public SendMessage initiateDeleteUsersProcess(Update update, Map<Long, UserActionState> userActionStates) {
-        userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_USERS_TO_DELETE);
+        userActionStates.put(update.getCallbackQuery().getFrom().getId(), UserActionState.WAITING_FOR_USERS_TO_DELETE);
         String text = """
                 Пожалуйста, вышлите ID участников, которых вы хотите удалить, каждый ID с новой строчки. Например:
 
@@ -243,13 +244,13 @@ public class UserManagementController {
                 11
                 12""";
         SendMessage message = new SendMessage();
-        message.setChatId(update.getMessage().getChatId());
+        message.setChatId(update.getCallbackQuery().getMessage().getChatId());
         message.setText(text);
         return message;
     }
 
     public SendMessage initiateEditUsersProcess(Update update, Map<Long, UserActionState> userActionStates) {
-        userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_USERS_TO_EDIT);
+        userActionStates.put(update.getCallbackQuery().getFrom().getId(), UserActionState.WAITING_FOR_USERS_TO_EDIT);
         String text = """
                 Пожалуйста, вышлите через запятую: ID участника, которого вы хотите изменить, имя, username. Например:
 
@@ -257,7 +258,7 @@ public class UserManagementController {
                 11,Петя,evilusername
                 12,Эвелина,evacool""";
         SendMessage message = new SendMessage();
-        message.setChatId(update.getMessage().getChatId());
+        message.setChatId(update.getCallbackQuery().getMessage().getChatId());
         message.setText(text);
         return message;
     }

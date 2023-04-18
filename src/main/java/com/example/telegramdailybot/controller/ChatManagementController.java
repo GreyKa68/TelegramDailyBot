@@ -33,7 +33,7 @@ public class ChatManagementController {
                 SendMessage message = new SendMessage();
                 message.setChatId(chatId);
                 message.setText(chatList);
-                message.setReplyMarkup(BotUtils.createInlineKeyboardMarkup("add", "delete", "edit"));
+                message.setReplyMarkup(BotUtils.createInlineKeyboardMarkup("add_chats", "delete_chats", "edit_chats"));
                 return message;
             } else {
                 SendMessage message = new SendMessage();
@@ -96,7 +96,7 @@ public class ChatManagementController {
     }
 
     public SendMessage initiateAddChatsProcess(Update update, Map<Long, UserActionState> userActionStates) {
-        userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_CHATS_TO_ADD);
+        userActionStates.put(update.getCallbackQuery().getFrom().getId(), UserActionState.WAITING_FOR_CHATS_TO_ADD);
         String text = """
                 Пожалуйста, вышлите через запятую: ID, название чата, роль. Например:
 
@@ -104,13 +104,13 @@ public class ChatManagementController {
                 12345678, Чат команды2, user
                 12345678, Иван Иванов, admin""";
         SendMessage message = new SendMessage();
-        message.setChatId(update.getMessage().getChatId());
+        message.setChatId(update.getCallbackQuery().getMessage().getChatId());
         message.setText(text);
         return message;
     }
 
     public SendMessage initiateDeleteChatsProcess(Update update, Map<Long, UserActionState> userActionStates) {
-        userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_CHATS_TO_DELETE);
+        userActionStates.put(update.getCallbackQuery().getFrom().getId(), UserActionState.WAITING_FOR_CHATS_TO_DELETE);
         String text = """
                 Пожалуйста, вышлите ID чатов, которых вы хотите удалить, каждый ID с новой строчки. Например:
 
@@ -118,13 +118,13 @@ public class ChatManagementController {
                 11
                 12""";
         SendMessage message = new SendMessage();
-        message.setChatId(update.getMessage().getChatId());
+        message.setChatId(update.getCallbackQuery().getMessage().getChatId());
         message.setText(text);
         return message;
     }
 
     public SendMessage initiateEditChatsProcess(Update update, Map<Long, UserActionState> userActionStates) {
-        userActionStates.put(update.getMessage().getFrom().getId(), UserActionState.WAITING_FOR_CHATS_TO_EDIT);
+        userActionStates.put(update.getCallbackQuery().getFrom().getId(), UserActionState.WAITING_FOR_CHATS_TO_EDIT);
         String text = """
                 Пожалуйста, вышлите через запятую: ID чата, который вы хотите изменить, название, роль. Например:
 
@@ -132,7 +132,7 @@ public class ChatManagementController {
                 11,Петя,admin
                 12,Scrum команда2,""";
         SendMessage message = new SendMessage();
-        message.setChatId(update.getMessage().getChatId());
+        message.setChatId(update.getCallbackQuery().getMessage().getChatId());
         message.setText(text);
         return message;
     }
