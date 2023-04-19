@@ -58,8 +58,10 @@ public class NotificationService {
             int notificationIdToDelete = Integer.parseInt(line);
             Notification notification = findById(notificationIdToDelete).orElse(null);
 
-            if (notification != null && (chatService.isAdmin(userId) || userId == chatId)) {
-                deleteById(notificationIdToDelete);
+            if (notification != null) {
+                if (chatService.isAdmin(userId) || notification.getChatid() == chatId) {
+                    deleteById(notificationIdToDelete);
+                }
             }
         }
     }
@@ -86,15 +88,16 @@ public class NotificationService {
 
             Notification notificationCurrent = findById(id).orElse(null);
 
-            if (notificationCurrent != null && (chatService.isAdmin(userId) || chatId == userId)) {
-                notificationCurrent.setText(notificationUpdated.getText());
-                notificationCurrent.setDatetime(notificationUpdated.getDatetime());
-                notificationCurrent.setRepetition(notificationUpdated.getRepetition());
-                notificationCurrent.setDatetimexcluded(notificationUpdated.getDatetimexcluded());
-                // Save the notification to the database
-                save(notificationCurrent);
+            if (notificationCurrent != null) {
+                if (chatService.isAdmin(userId) || notificationCurrent.getChatid() == chatId) {
+                    notificationCurrent.setText(notificationUpdated.getText());
+                    notificationCurrent.setDatetime(notificationUpdated.getDatetime());
+                    notificationCurrent.setRepetition(notificationUpdated.getRepetition());
+                    notificationCurrent.setDatetimexcluded(notificationUpdated.getDatetimexcluded());
+                    // Save the notification to the database
+                    save(notificationCurrent);
+                }
             }
-
             return "Уведомление успешно отредактировано";
         } catch (NumberFormatException e) {
             return "Ошибка при парсинге ID. Пожалуйста, проверьте формат и попробуйте еще раз.";

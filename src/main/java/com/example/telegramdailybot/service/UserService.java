@@ -54,8 +54,10 @@ public class UserService {
             int userIdtoDelete = Integer.parseInt(line);
             User user = findById(userIdtoDelete).orElse(null);
 
-            if (user != null && (chatService.isAdmin(userId) || userId == chatId)) {
-                deleteById(userIdtoDelete);
+            if (user != null) {
+                if (chatService.isAdmin(userId) || user.getChatid() == chatId) {
+                    deleteById(userIdtoDelete);
+                }
             }
         }
     }
@@ -73,10 +75,12 @@ public class UserService {
 
                 User user = findById(id).orElse(null);
 
-                if (user != null && (chatService.isAdmin(userId) || userId == chatId)) {
-                    user.setName(name);
-                    user.setUsername(username);
-                    save(user);
+                if (user != null) {
+                    if (chatService.isAdmin(userId) || user.getChatid() == chatId) {
+                        user.setName(name);
+                        user.setUsername(username);
+                        save(user);
+                    }
                 }
             }
         }
