@@ -16,6 +16,7 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(name = "text", length = 2000)
     private String text;
 
     @Column(name = "datetime")
