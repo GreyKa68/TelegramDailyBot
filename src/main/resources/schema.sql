@@ -49,7 +49,7 @@ CREATE SEQUENCE public.notifications_id_seq
 
 CREATE TABLE public.notifications (
     id integer DEFAULT nextval('public.notifications_id_seq'::regclass) NOT NULL,
-    text character varying(255) NOT NULL,
+    text character varying(2000) NOT NULL,
     datetime timestamp(6) with time zone NOT NULL,
     datetimexcluded jsonb,
     chatid bigint,
