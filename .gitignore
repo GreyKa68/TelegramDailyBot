@@ -4,6 +4,10 @@
 *.iml
 *.ipr
 
+### Visual Studio Code ###
+.vscode/
+*.code-workspace
+
 # Package Files #
 *.jar
 *.war
